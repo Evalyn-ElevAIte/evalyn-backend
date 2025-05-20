@@ -13,7 +13,7 @@ load_dotenv()
 
 # --- Configuration ---
 CHUTES_API_ENDPOINT = "https://llm.chutes.ai/v1/chat/completions"
-# API_KEY_ENV_VARIABLE = os.getenv("CHUTES_API_KEY") # This line assigns the key itself, not the var name
+# API_KEY_ENV_VARIABLE = os.getenv("CHUTES_API_TOKEN") # This line assigns the key itself, not the var name
 
 def get_chutes_api_key():
     """
@@ -22,11 +22,11 @@ def get_chutes_api_key():
     Returns:
         str: The API key if found, otherwise None.
     """
-    api_key = os.getenv("CHUTES_API_KEY")
+    api_key = os.getenv("CHUTES_API_TOKEN")
     if not api_key:
-        print("Error: The environment variable CHUTES_API_KEY is not set.")
+        print("Error: The environment variable CHUTES_API_TOKEN is not set.")
         print("Please set it in your .env file or environment.")
-        print("Example: CHUTES_API_KEY='your_actual_chutes_api_key_here'")
+        print("Example: CHUTES_API_TOKEN='your_actual_chutes_api_key_here'")
     return api_key
 
 def call_chutes_model_api(prompt_text): # Removed api_key, will call get_chutes_api_key inside
@@ -43,7 +43,7 @@ def call_chutes_model_api(prompt_text): # Removed api_key, will call get_chutes_
     """
     api_key = get_chutes_api_key()
     if not api_key:
-        return "Error: Chutes API Key not found. Please ensure CHUTES_API_KEY is set."
+        return "Error: Chutes API Key not found. Please ensure CHUTES_API_TOKEN is set."
 
     if not CHUTES_API_ENDPOINT:
         print("Error: CHUTES_API_ENDPOINT is not configured.")
