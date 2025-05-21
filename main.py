@@ -1,6 +1,6 @@
 import streamlit as st
-from app.prompts.prompt_generator import construct_assignment_analysis_prompt
-from app.core import gemini, chutes
+from app.prompts.prompt_generator import construct_overall_assignment_analysis_prompt
+from app.core.llm import gemini, chutes
 import asyncio # Required if the underlying API calls use asyncio.run()
 
 # --- Main Streamlit App ---
@@ -38,12 +38,23 @@ def run_streamlit_app():
 
 
     # --- Input Columns for better layout ---
+    # --- Input Columns for better layout ---
     col1, col2 = st.columns(2)
 
     with col1:
         st.header("1. Assignment Details")
+        assignment_id = st.text_input(
+            "Enter the Assignment ID:",
+            key="assignment_id",
+            placeholder="e.g., ECON202_Assignment1"
+        )
+        student_id = st.text_input(
+            "Enter the Student ID:",
+            key="student_id",
+            placeholder="e.g., s1234567"
+        )
         assignment_question = st.text_area(
-            "Enter the full Assignment Question:",
+            "Enter the full Question Text:",
             height=150,
             key="question",
             placeholder="e.g., Explain the process of cellular respiration and its significance."
@@ -119,12 +130,34 @@ def run_streamlit_app():
         st.info(f"⏳ Generating prompt and calling **{selected_model}** model... Please wait.")
 
         try:
-            full_prompt = construct_assignment_analysis_prompt(
-                assignment_question=assignment_question,
-                evaluation_metrics=evaluation_metrics,
-                contextual_requirements=contextual_requirements,
-                lecturer_answer=lecturer_answer,
-                student_answer=student_answer
+            # Structure inputs for prompt_generator
+            questions_and_answers = [
+                {
+                    "question_id": "Q1", # Using a simple ID as there's only one question input
+                    "question_text": assignment_question,
+                    "student_answer_text": student_answer,
+                    "lecturer_answer_text": lecturer_answer # Include lecturer answer in the question context
+                }
+            ]
+
+            # Structure evaluation metrics as overall assignment rubrics
+            # Assign a default max_score as there's no input for it
+            overall_assignment_rubrics = []
+            for i, metric in enumerate(evaluation_metrics):
+                overall_assignment_rubrics.append({
+                    "criterion_id": f"OVERALL_CRIT_{i+1}",
+                    "criterion_name": metric,
+                    "max_score": 10, # Default score, can be adjusted if input is added later
+                    "description": metric
+                })
+
+            full_prompt = construct_overall_assignment_analysis_prompt(
+                assignment_id=assignment_id,
+                student_id=student_id,
+                questions_and_answers=questions_and_answers,
+                overall_assignment_rubrics=overall_assignment_rubrics,
+                overall_assignment_title=assignment_question # Using question as title for now
+                # lecturer_overall_notes is not directly mapped from current inputs
             )
             st.session_state.generated_prompt = full_prompt
             
