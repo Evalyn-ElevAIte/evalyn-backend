@@ -1,5 +1,10 @@
 from fastapi import FastAPI
+from app.routes import quiz
 
 app = FastAPI()
+app.include_router(quiz.router)
 
-# Include route from other files
+@app.get("/")
+def read_root():
+    return {"message" : "welcome brother"}
+
