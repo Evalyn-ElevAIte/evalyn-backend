@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from app.db.db import init_db, close_db
 from app.routes import quiz
+from app.routes import user
+
 
 app = FastAPI()
 app.include_router(quiz.router)
+app.include_router(user.router)
 
 # startup
 @app.on_event("startup")
