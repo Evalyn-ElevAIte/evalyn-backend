@@ -6,7 +6,7 @@ from app.routes import user
 
 app = FastAPI()
 app.include_router(quiz.router)
-app.include_router(user.router)
+app.include_router(user.router, prefix="/api")
 
 # startup
 @app.on_event("startup")
