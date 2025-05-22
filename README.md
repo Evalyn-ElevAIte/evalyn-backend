@@ -81,12 +81,17 @@ The project dependencies are listed in the `requirements.txt` file. Key dependen
 
 ## Project Structure
 
-(Add details about the project structure here)
+project-root/
+- app/                 # Main application folder
+  - routes/           # FastAPI route files (e.g., quiz.py, user.py)
+  - models/           # Pydantic or SQLAlchemy models
+  - services/         # Business logic (e.g., quiz grading, user management)
+  - ai/               # Azure AI integrations (e.g., OpenAI, Form Recognizer)
+  - db/               # Database connections and queries
+  - main.py           # Entry point for the FastAPI app
+- evalyn_env/         # Virtual environment (ignored by Git)
+- .gitignore          # Git ignore rules
+- requirements.txt    # Python dependencies
+- README.md           # Project documentation
 
-## Contributing
-
-(Add contributing guidelines here)
-
-## License
-
-(Add license information here)
+## API Documentation (pending)
