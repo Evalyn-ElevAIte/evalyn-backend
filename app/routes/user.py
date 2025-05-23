@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException
 from app.models.models import User
 from app.models.models import Quiz
 from app.models.models import QuizParticipant
+from app.schemas.user import UserCreate, UserRead
+from app.utils.util import hash_password
 
 from tortoise.contrib.pydantic import pydantic_model_creator
 
@@ -11,7 +13,7 @@ router = APIRouter()
 
 # ! Create a Pydantic serializer for the User model
 User_Pydantic = pydantic_model_creator(User, name="User")
-User_Pydantic_With_Quizzes = pydantic_model_creator(User, name="UserWithQuizzes", exclude=("password",))
+User_Pydantic_noPass = pydantic_model_creator(User, name="UserNoPass", exclude=("password",))
 Quiz_Pydantic = pydantic_model_creator(Quiz, name="Quiz")
 
 
@@ -19,6 +21,17 @@ Quiz_Pydantic = pydantic_model_creator(Quiz, name="Quiz")
 @router.get("/users", response_model=list[User_Pydantic])
 async def get_users():
     return await User.all()
+
+# ! create user
+@router.post("/users", response_model=User_Pydantic_noPass)
+async def create_user(payload: UserCreate):
+    if await User.filter(email=payload.email).exists():
+        raise HTTPException(400, "Email already registered")
+    hashed = hash_password(payload.password)
+    user_obj = await User.create(
+        name=payload.name, email=payload.email, password=hashed
+    )
+    return await User_Pydantic_noPass.from_tortoise_orm(user_obj)
 
 # ! get user by id
 @router.get("/users/{user_id}", response_model=User_Pydantic)

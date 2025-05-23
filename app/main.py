@@ -5,7 +5,7 @@ from app.routes import user
 
 
 app = FastAPI()
-app.include_router(quiz.router)
+app.include_router(quiz.router, prefix="/api")
 app.include_router(user.router, prefix="/api")
 
 # startup
