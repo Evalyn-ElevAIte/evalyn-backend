@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
-
+from datetime import datetime
+from models import StatusType  
 
 class JoinQuizRequest(BaseModel):
     join_code: str
@@ -9,3 +10,4 @@ class JoinQuizRequest(BaseModel):
 class JoinQuizResponse(BaseModel):
     message: str
     participant_id: int
+
