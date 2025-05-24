@@ -1,6 +1,9 @@
 import asyncio
 from app.db.db import init_db, close_db
 from app.models.models import User, Quiz, Question, QuizParticipant
+from app.models.models import AnswerType
+
+
 
 async def seed():
     await init_db()
@@ -40,8 +43,10 @@ async def seed():
     quiz15 = await Quiz.create(title="History Problem Solving Quiz", description="test History Problem Solving", join_code="HISTPROB1", creator=user5)
 
     # Create Questionss
-    # await Question.create(quiz=quiz1, text="What is 2+2?", type="text", criteria="Must be 4")
-    # await Question.create(quiz=quiz2, text="What is H2O?", type="text", criteria="Must be water")
+    await Question.create(quiz=quiz1, text="What is 2+2?", type=AnswerType.TEXT, rubric="Must be 4")
+    await Question.create(quiz=quiz2, text="What is H2O?", type=AnswerType.TEXT, rubric="Must be water")
+    await Question.create(quiz=quiz3, text="What is 2+2?", type=AnswerType.TEXT, rubric="Must be 4")
+    await Question.create(quiz=quiz4, text="What is H2O?", type=AnswerType.TEXT, rubric="Must be water")
 
     # Add Participants
     for i in range(1, 11):

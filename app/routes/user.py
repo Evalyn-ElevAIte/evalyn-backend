@@ -9,7 +9,7 @@ from app.utils.util import hash_password
 
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-router = APIRouter()
+router = APIRouter(tags=["users"])
 
 # ! Create a Pydantic serializer for the User model
 User_Pydantic = pydantic_model_creator(User, name="User")

@@ -29,6 +29,7 @@ async def create_quiz(payload: QuizCreate):
                 creator_id=payload.creator_id,
                 title=payload.title,
                 description=payload.description,
+                # status=payload.status,
                 join_code=code,
             )
             return await Quiz_Pydantic.from_tortoise_orm(quiz)
