@@ -24,6 +24,9 @@ class Quiz(Model):
     creator = fields.ForeignKeyField("models.User", related_name="quizzes")
     title = fields.CharField(max_length=64)
     description = fields.CharField(max_length=255)
+    assignment_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
+    student_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
+    lecturer_overall_notes = fields.TextField(null=True)
     join_code = fields.CharField(max_length=10, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
@@ -33,9 +36,13 @@ class Quiz(Model):
 class Question(Model):
     id = fields.IntField(pk=True)
     quiz = fields.ForeignKeyField("models.Quiz", related_name="questions")
+    question_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
     text = fields.TextField()
     type = fields.CharField(max_length=50)  # e.g., "text", "video", "pdf"
-    criteria = fields.CharField(max_length=50)  # can be list of rubrics or points
+    student_answer_text = fields.TextField(null=True)  # Matches prompt_generator.py
+    lecturer_answer_text = fields.TextField(null=True)  # Matches prompt_generator.py
+    rubric = fields.TextField()  # Matches prompt_generator.py
+    rubric_max_score = fields.IntField(default=0)  # Matches prompt_generator.py
     created_at = fields.DatetimeField(auto_now_add=True)
 
 class QuizParticipant(Model):
@@ -45,3 +52,17 @@ class QuizParticipant(Model):
     joined_at = fields.DatetimeField(auto_now_add=True)
     score = fields.IntField(default=0)
     completed = fields.BooleanField(default=False)
+
+class QuizResponse(Model):
+    id = fields.IntField(pk=True)
+    creator = fields.ForeignKeyField("models.User", related_name="responses")
+    title = fields.CharField(max_length=64)
+    description = fields.CharField(max_length=255)
+    optional_context = fields.TextField(null=True)  # Optional context for the response
+    participant = fields.ForeignKeyField("models.QuizParticipant", related_name="responses")
+    question = fields.ForeignKeyField("models.Question", related_name="responses")
+    answer = fields.TextField()
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("participant", "question"),)  # Ensure one response per question per participant
