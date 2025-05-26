@@ -60,7 +60,7 @@ def call_gemini_api(prompt_text): # Removed api_key from params, will call get_a
         # Optional: Add generationConfig if needed
         "generationConfig": {
            "temperature": 0.7, # Example temperature
-           "maxOutputTokens": 1024, # Example max tokens
+           "maxOutputTokens": 4096
         }
     }
 
