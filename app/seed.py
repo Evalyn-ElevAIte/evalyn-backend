@@ -1,8 +1,7 @@
 import asyncio
 from app.db.db import init_db, close_db
 from app.models.models import User, Quiz, Question, QuizParticipant
-from app.models.models import AnswerType
-
+from app.utils.util import AnswerType, StatusType
 
 
 async def seed():
@@ -51,7 +50,11 @@ async def seed():
     # Add Participants
     for i in range(1, 11):
         for j in range(1, 16):
-            await QuizParticipant.create(user=eval(f"user{i}"), quiz=eval(f"quiz{j}"))
+            if i%2 == 0:
+                status=StatusType.DONE
+            else:
+                status=StatusType.UNFINISHED
+            await QuizParticipant.create(user=eval(f"user{i}"), quiz=eval(f"quiz{j}"), status=status)
     # await QuizParticipant.create(user=user10, quiz=quiz2)
     
     print("✅ Seed complete.")

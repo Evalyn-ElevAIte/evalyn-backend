@@ -1,25 +1,26 @@
 # app/routes/quiz.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from tortoise.exceptions import IntegrityError
 from app.models.models import Quiz
 from app.schemas.quiz import QuizCreate, QuizRead
 from app.utils.util import make_join_code
 from tortoise.contrib.pydantic import pydantic_model_creator
+from app.dependencies import get_current_user
+
 
 Quiz_Pydantic = pydantic_model_creator(
     Quiz, name="Quiz", exclude=("questions", "participants")
 )
 
-router = APIRouter(tags=["quizzes"], prefix="/quizzes")
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 # ! get all quizzes
-@router.get("", response_model=list[Quiz_Pydantic])
+@router.get("/", response_model=list[Quiz_Pydantic])
 async def get_quizzes():
     return await Quiz.all()
 
-
 # ! create a quiz
-@router.post("", response_model=Quiz_Pydantic)
+@router.post("/", response_model=Quiz_Pydantic)
 async def create_quiz(payload: QuizCreate):
     # generate a code, retry on collision
     for _ in range(5):

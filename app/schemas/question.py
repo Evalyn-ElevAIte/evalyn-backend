@@ -33,7 +33,7 @@ class QuestionRead(QuestionBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Optionally, if you want to nest the quiz data inside your question responses:

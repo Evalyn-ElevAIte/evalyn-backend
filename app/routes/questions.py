@@ -8,7 +8,7 @@ from schemas.question import (
     QuestionRead,
 )
 
-router = APIRouter(prefix="/questions", tags=["questions"])
+router = APIRouter()
 
 @router.get("/quiz/{quiz_id}", response_model=List[QuestionRead])
 async def get_questions_by_quiz(quiz_id: int):

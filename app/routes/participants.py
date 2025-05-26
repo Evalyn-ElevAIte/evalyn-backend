@@ -9,7 +9,7 @@ from schemas import QuizParticipantCreate, QuizParticipantRead
 
 from models import QuizParticipant
 
-router = APIRouter(prefix="/participants", tags=["participants"])
+router = APIRouter()
 
 
 @router.post(

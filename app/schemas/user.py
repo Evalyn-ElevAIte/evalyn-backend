@@ -6,6 +6,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+# ? we dont use this, because we have pydantic
 class UserRead(BaseModel):
     id: int
     name: str
@@ -13,4 +14,4 @@ class UserRead(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
