@@ -1,0 +1,75 @@
+Berikut adalah contoh data input yang dapat Anda gunakan untuk menguji halaman generator AI Assignment Analyzer. Data ini menggunakan Bahasa Indonesia dan dirancang untuk tingkat perguruan tinggi, dengan fokus pada mata kuliah Ekonomi Makro.
+
+1. Detail Tugas (Assignment Details)
+ID Tugas (Assignment ID):
+EKOMAKRO_UTS_GENAP2024
+
+ID Mahasiswa (Student ID):
+MHS12345678
+
+Judul Keseluruhan Tugas (Overall Assignment Title) (Opsional):
+Ujian Tengah Semester Ekonomi Makro - Analisis Kebijakan Fiskal dan Moneter
+
+Catatan/Panduan Umum Dosen (Lecturer's Overall Notes/Guidance) (Opsional):
+Fokus pada kedalaman analisis, penggunaan teori ekonomi yang relevan, dan kemampuan menghubungkan konsep dengan studi kasus aktual. Perhatikan struktur argumen dan kejelasan bahasa.
+
+2. Pertanyaan, Jawaban & Rubrik per Pertanyaan (Questions, Answers & Per-Question Rubrics)
+Pertanyaan 1
+ID Pertanyaan 1 (Question 1 ID):
+EKOMAKRO_Q1
+
+Teks Pertanyaan 1 (Question 1 Text):
+Jelaskan perbedaan mendasar antara kebijakan fiskal dan kebijakan moneter dalam konteks stabilisasi ekonomi. Berikan contoh konkret penerapan masing-masing kebijakan tersebut di Indonesia dalam lima tahun terakhir dan analisis dampaknya terhadap inflasi dan pertumbuhan ekonomi.
+
+Jawaban Ideal Dosen untuk Pertanyaan 1 (Lecturer's Ideal Answer for Question 1):
+`Kebijakan fiskal adalah langkah-langkah pemerintah dalam pengelolaan anggaran pendapatan dan belanja negara (APBN) untuk mempengaruhi perekonomian. Instrumen utamanya adalah pengeluaran pemerintah (G) dan pajak (T). Kebijakan fiskal ekspansif (menaikkan G atau menurunkan T) bertujuan meningkatkan permintaan agregat, sementara kebijakan kontraktif (menurunkan G atau menaikkan T) bertujuan menekan permintaan agregat. Contoh di Indonesia: Peningkatan belanja infrastruktur dan bantuan sosial selama pandemi COVID-19 (fiskal ekspansif) untuk menopang daya beli dan aktivitas ekonomi. Dampaknya membantu menahan kontraksi ekonomi lebih dalam, namun berpotensi meningkatkan tekanan inflasi jika tidak diimbangi sisi suplai.
+
+Kebijakan moneter adalah langkah-langkah bank sentral (Bank Indonesia) untuk mengatur jumlah uang beredar dan tingkat suku bunga guna mencapai stabilitas harga (inflasi rendah) dan mendukung pertumbuhan ekonomi berkelanjutan. Instrumen utamanya meliputi operasi pasar terbuka, tingkat diskonto, dan giro wajib minimum. Kebijakan moneter ekspansif (menurunkan suku bunga acuan, membeli surat berharga) bertujuan meningkatkan likuiditas dan mendorong investasi/konsumsi, sementara kebijakan kontraktif (menaikkan suku bunga acuan, menjual surat berharga) bertujuan mengerem inflasi. Contoh di Indonesia: Kenaikan BI-Rate secara bertahap pada tahun 2022-2023 untuk mengendalikan inflasi yang meningkat pasca lonjakan harga komoditas global. Dampaknya berhasil menahan laju inflasi, namun berpotensi sedikit memperlambat pertumbuhan kredit dan investasi jangka pendek.
+
+Perbedaan mendasar: Pelaku (Pemerintah vs Bank Sentral), Instrumen (APBN vs Instrumen Moneter), Fokus (lebih luas pada alokasi sumber daya dan distribusi vs lebih fokus pada stabilitas harga dan nilai tukar), Transmisi (langsung melalui belanja/pajak vs tidak langsung melalui pasar keuangan).`
+
+Jawaban Mahasiswa untuk Pertanyaan 1 (Student's Submitted Answer for Question 1):
+Kebijakan fiskal itu dari pemerintah, contohnya naikin pajak buat kurangin inflasi. Kalau moneter itu dari Bank Indonesia, contohnya naikin suku bunga biar orang nabung dan inflasi turun. Di Indonesia, pemerintah kasih bansos itu fiskal, terus BI naikin suku bunga itu moneter. Dua-duanya penting buat ekonomi biar stabil.
+
+Rubrik untuk Pertanyaan 1 (Rubric for Question 1):
+1. Ketepatan definisi dan perbedaan kebijakan fiskal & moneter (30%). 2. Relevansi dan kedalaman analisis contoh penerapan di Indonesia (40%). 3. Analisis dampak terhadap inflasi dan pertumbuhan ekonomi (30%).
+
+Skor Maksimum untuk Rubrik Pertanyaan 1 (Max Score for Question 1 Rubric):
+100
+
+Pertanyaan 2
+ID Pertanyaan 2 (Question 2 ID):
+EKOMAKRO_Q2
+
+Teks Pertanyaan 2 (Question 2 Text):
+Analisis efektivitas kebijakan moneter dalam mengatasi stagflasi. Faktor-faktor apa saja yang dapat membatasi efektivitas kebijakan moneter dalam skenario tersebut?
+
+Jawaban Ideal Dosen untuk Pertanyaan 2 (Lecturer's Ideal Answer for Question 2):
+`Stagflasi, kondisi di mana terjadi stagnasi pertumbuhan ekonomi (atau resesi) bersamaan dengan inflasi yang tinggi, merupakan tantangan signifikan bagi kebijakan moneter. Kebijakan moneter konvensional (misalnya, menaikkan suku bunga untuk menekan inflasi) dapat memperburuk stagnasi ekonomi. Sebaliknya, kebijakan moneter longgar (menurunkan suku bunga untuk mendorong pertumbuhan) dapat mengakselerasi inflasi.
+
+Efektivitas kebijakan moneter dalam mengatasi stagflasi seringkali terbatas karena:
+
+Inflasi sisi penawaran (Cost-push inflation): Jika inflasi didorong oleh guncangan biaya (misalnya, kenaikan harga energi global, gangguan rantai pasok), kebijakan moneter yang bersifat demand-management kurang efektif. Menaikkan suku bunga tidak secara langsung mengatasi akar masalah biaya produksi.
+
+Ekspektasi Inflasi yang Melekat (Sticky Expectations): Jika masyarakat dan pelaku ekonomi memiliki ekspektasi inflasi yang tinggi dan sudah terlanjur melekat, kebijakan moneter kontraktif mungkin memerlukan dosis yang sangat kuat (resesi yang dalam) untuk mematahkannya.
+
+Likuiditas Perangkap (Liquidity Trap): Dalam kondisi pesimisme ekonomi yang parah, penurunan suku bunga mungkin tidak efektif mendorong investasi dan konsumsi karena pelaku ekonomi lebih memilih menahan kas.
+
+Globalisasi dan Keterbukaan Ekonomi: Aliran modal internasional dan kondisi ekonomi global dapat mempengaruhi efektivitas kebijakan moneter domestik. Misalnya, kebijakan moneter ketat domestik bisa ter-offset oleh aliran modal masuk yang besar.
+
+Time Lags: Kebijakan moneter membutuhkan waktu untuk memberikan dampak penuh pada perekonomian, sementara kondisi stagflasi mungkin memerlukan respons yang lebih cepat.
+
+Trade-off Kebijakan: Bank sentral menghadapi dilema antara menekan inflasi (memperburuk resesi) atau mendorong pertumbuhan (memperparah inflasi).
+
+Dalam skenario stagflasi, koordinasi yang erat antara kebijakan moneter dan fiskal, serta kebijakan struktural yang mengatasi kendala sisi penawaran, menjadi sangat krusial.`
+
+Jawaban Mahasiswa untuk Pertanyaan 2 (Student's Submitted Answer for Question 2):
+Stagflasi itu susah buat kebijakan moneter. Soalnya kalau mau turunin inflasi, ekonomi jadi makin lesu. Kalau mau ekonomi tumbuh, inflasi makin tinggi. Jadi kayak buah simalakama. Mungkin BI bingung juga harus gimana. Faktornya ya karena harga-harga naik dari luar negeri sama orang udah mikir harga bakal naik terus.
+
+Rubrik untuk Pertanyaan 2 (Rubric for Question 2):
+1. Pemahaman konsep stagflasi dan dilema kebijakan moneter (30%). 2. Identifikasi dan penjelasan faktor-faktor yang membatasi efektivitas kebijakan moneter (50%). 3. Kualitas analisis dan argumentasi (20%).
+
+Skor Maksimum untuk Rubrik Pertanyaan 2 (Max Score for Question 2 Rubric):
+100
+
+Semoga contoh ini membantu!

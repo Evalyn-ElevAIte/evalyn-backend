@@ -43,4 +43,5 @@ class QuizParticipant(Model):
     user = fields.ForeignKeyField("models.User", related_name="participants")
     quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
     joined_at = fields.DatetimeField(auto_now_add=True)
-
+    score = fields.IntField(default=0)
+    completed = fields.BooleanField(default=False)
