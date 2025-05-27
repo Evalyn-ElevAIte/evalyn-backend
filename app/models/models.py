@@ -1,5 +1,9 @@
 from tortoise import fields
 from tortoise.models import Model
+from app.utils.util import AnswerType, StatusType
+
+
+# ! helper functions
 
 class User(Model):
     id = fields.IntField(pk=True)
@@ -49,6 +53,7 @@ class QuizParticipant(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="participants")
     quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
+    status = fields.CharEnumField(StatusType)
     joined_at = fields.DatetimeField(auto_now_add=True)
     score = fields.IntField(default=0)
     completed = fields.BooleanField(default=False)
