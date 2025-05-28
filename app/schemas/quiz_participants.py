@@ -4,7 +4,7 @@ from enum import Enum
 from datetime import datetime
 
 # (reuse your StatusType enum if you already defined one; otherwise, re‐import it)
-from models import StatusType  
+from app.utils.util import StatusType
 
 class QuizParticipantBase(BaseModel):
     user_id: int = Field(..., description="ID of the user joining the quiz")

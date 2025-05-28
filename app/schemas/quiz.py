@@ -8,6 +8,10 @@ class QuizCreate(BaseModel):
     title: str
     description: str
     status: StatusType = Field(..., description="Status of the quiz")
+    lecturer_overall_notes: str = Field(
+        None, max_length=255, description="Overall notes from the lecturer"
+    )
+    
     
 
 class QuizRead(BaseModel):

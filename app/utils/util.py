@@ -6,10 +6,8 @@ from enum import Enum
 
 # helper class
 class AnswerType(str, Enum):
-    TEXT  = "text"
-    VIDEO = "video"
-    PDF   = "pdf"
-    CHOICE = "choice"
+    ESSAY = "text / essay"
+    MULTIPLE_CHOICE = "multiple choices"
     
 class StatusType(str, Enum):
     # TEACHER

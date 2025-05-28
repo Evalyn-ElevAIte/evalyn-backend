@@ -2,8 +2,8 @@ from typing import List
 from fastapi import APIRouter, HTTPException, status
 from tortoise.exceptions import DoesNotExist
 
-from models import Question as QuestionModel
-from schemas.question import (
+from app.models.models import Question as QuestionModel
+from app.schemas.question import (
     QuestionCreate,
     QuestionRead,
 )

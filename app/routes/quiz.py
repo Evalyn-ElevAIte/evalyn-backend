@@ -12,7 +12,9 @@ Quiz_Pydantic = pydantic_model_creator(
     Quiz, name="Quiz", exclude=("questions", "participants")
 )
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
+# router = APIRouter(dependencies=[Depends(get_current_user)])
+
 
 # ! get all quizzes
 @router.get("/", response_model=list[Quiz_Pydantic])
