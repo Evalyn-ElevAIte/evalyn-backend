@@ -47,7 +47,6 @@ class Quiz(Model):
 class Question(Model):
     id = fields.IntField(pk=True)
     quiz = fields.ForeignKeyField("models.Quiz", related_name="questions")
-    question_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
     text = fields.TextField()
     type = fields.CharEnumField(AnswerType, default=AnswerType.TEXT)
 

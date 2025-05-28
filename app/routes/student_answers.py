@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from tortoise.exceptions import IntegrityError
 from app.models.models import QuestionResponse, Question, QuizParticipant
-from schemas.question_response import QuestionResponseCreate, QuestionResponseRead
+from app.schemas.question_response import QuestionResponseCreate, QuestionResponseRead
 from app.dependencies import get_current_user
 from datetime import datetime
+from tortoise.contrib.pydantic import pydantic_model_creator
 
-router = APIRouter(
-    prefix="/api/student/answers",
-    tags=["student_answers"]
-)
+router = APIRouter()
+
+StudentResponse = pydantic_model_creator(QuestionResponse, name="QuestionResponse")
 
 @router.post("/", response_model=QuestionResponseRead)
 async def submit_answer(
@@ -36,9 +36,15 @@ async def submit_answer(
         response = await QuestionResponse.create(
             user_id=current_user.id,
             question_id=response_data.question_id,
-            answer=response_data.answer
+            answers=response_data.answers
         )
-        return await QuestionResponseRead.from_tortoise_orm(response)
+        await response.fetch_related('question')
+        return QuestionResponseRead(
+            id=response.id,
+            question_id=response.question.id,
+            answers=response.answers,
+            joined_at=response.joined_at
+        )
     except IntegrityError:
         raise HTTPException(
             status_code=400,
@@ -56,4 +62,10 @@ async def get_answer(
     )
     if not response:
         raise HTTPException(status_code=404, detail="Answer not found")
-    return await QuestionResponseRead.from_tortoise_orm(response)
+    await response.fetch_related('question')
+    return QuestionResponseRead(
+        id=response.id,
+        question_id=response.question.id,
+        answers=response.answers,
+        joined_at=response.joined_at
+    )
