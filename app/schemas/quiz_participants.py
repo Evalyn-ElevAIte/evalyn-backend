@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from enum import Enum
 from datetime import datetime
-from models import StatusType  
+from app.models.models import StatusType  
 
 class JoinQuizRequest(BaseModel):
     join_code: str

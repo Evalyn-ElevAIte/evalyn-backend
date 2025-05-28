@@ -54,7 +54,6 @@ class Question(Model):
     options = fields.JSONField(null=True)  # list of strings for choices
     expected_answer = fields.JSONField(null=True)
     # rubric = fields.JSONField()
-    lecturer_answer_text = fields.TextField(null=True)  # Matches prompt_generator.py
     rubric = fields.TextField()  # Matches prompt_generator.py
     rubric_max_score = fields.IntField(default=0)  # Matches prompt_generator.py
     created_at = fields.DatetimeField(auto_now_add=True)
