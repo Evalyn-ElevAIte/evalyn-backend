@@ -8,7 +8,7 @@ class QuizCreate(BaseModel):
     title: str
     description: str
     status: StatusType = Field(..., description="Status of the quiz")
-    
+    lecturer_overall_notes: str
 
 class QuizRead(BaseModel):
     id: int
@@ -20,4 +20,10 @@ class QuizRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QuizWithStatus(BaseModel):
+    title: str
+    description: str
+    created_at: datetime
+    status: StatusType
 

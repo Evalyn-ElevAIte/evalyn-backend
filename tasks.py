@@ -1,7 +1,7 @@
 import os
 
 def run():
-    os.system("uvicorn app.main:app --reload")
+    os.system("uvicorn main:app --reload")
 
 def seed():
     os.system("python -m app.seed")

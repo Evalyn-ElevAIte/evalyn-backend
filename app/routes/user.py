@@ -1,56 +1,81 @@
 # app/routes/user.py
 from fastapi import APIRouter, HTTPException, Depends, status
 from app.models.models import User, Quiz, QuizParticipant
-from app.schemas.user import UserCreate, UserRead
-from app.utils.util import hash_password
 from app.dependencies import get_current_user
+from app.schemas.quiz import QuizWithStatus
 
 from tortoise.contrib.pydantic import pydantic_model_creator
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+# router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
 
 # ! Create a Pydantic serializer for the User model
-User_Pydantic = pydantic_model_creator(User, name="User")
-User_Pydantic_noPass = pydantic_model_creator(User, name="UserNoPass", exclude=("password",))
+User_Pydantic_Read = pydantic_model_creator(User, name="UserNoPass", exclude=("password"))
 Quiz_Pydantic = pydantic_model_creator(Quiz, name="Quiz")
 
 # ! get all user
-@router.get("/all_users", response_model=list[UserRead])
+@router.get("/all_users", response_model=list[User_Pydantic_Read])
 async def get_users():
     return await User.all()
 
 # ! get user by id
-@router.get("/{user_id}", response_model=User_Pydantic)
-async def get_user(user_id: int):
-    user = await User.get_or_none(id=user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+@router.get('/', response_model=User_Pydantic_Read)
+async def get_user(current_user: User = Depends(get_current_user)):
+    return current_user
 
 # ! get kuis yang diikuti oleh user
-@router.get("/{user_id}/quizzes", response_model=list[Quiz_Pydantic])
-async def get_user_quizzes(user_id: int):
-    participations  = await QuizParticipant.filter(user=user_id).prefetch_related("quiz")
+@router.get('/quizzes', response_model=list[QuizWithStatus])
+async def get_user_quizzes(current_user: User = Depends(get_current_user)):
+    participations = await QuizParticipant.filter(user=current_user.id).prefetch_related("quiz").order_by("-quiz__created_at")
     if not participations:
         raise HTTPException(status_code=404, detail="User's quizzes not found")
     
-    quizzes = [p.quiz for p in participations]
+    result = [
+        QuizWithStatus(
+            title=p.quiz.title,
+            description=p.quiz.description,
+            created_at=p.quiz.created_at,
+            status=p.status
+        )
+        for p in participations
+    ]
     
-    return quizzes 
-
-# ! get data kuis yang diikuti oleh user
-@router.get("/{user_id}/quizzes/{quiz_id}", response_model=Quiz_Pydantic)
-async def get_user_quiz(user_id: int, quiz_id: int):
-    quiz = await QuizParticipant.get_or_none(user=user_id, quiz=quiz_id).prefetch_related("quiz")
-    if not quiz:
-        raise HTTPException(status_code=404, detail="User's Quiz not found")
-    
-    return quiz.quiz
+    return result 
 
 # ! get user ini buat kuis apa aja
-@router.get("/{user_id}/quizzes_creator", response_model=list[Quiz_Pydantic])
-async def get_user_participants(user_id: int):
-    quizes = await Quiz.filter(creator=user_id).prefetch_related("participants__user")
+@router.get('/quizzes_creator', response_model=list[Quiz_Pydantic])
+async def get_user_quizzes_creator(current_user: User = Depends(get_current_user)):
+    quizes = await Quiz.filter(creator=current_user.id).prefetch_related("participants__user")
     if not quizes:
         raise HTTPException(status_code=404, detail="No quizzes found for this user")
     return quizes
+    
+# # ! get data kuis yang diikuti oleh user
+# @router.get("/{user_id}/quizzes/{quiz_id}", response_model=Quiz_Pydantic)
+# async def get_user_quiz(user_id: int, quiz_id: int):
+#     quiz = await QuizParticipant.get_or_none(user=user_id, quiz=quiz_id).prefetch_related("quiz")
+#     if not quiz:
+#         raise HTTPException(status_code=404, detail="User's Quiz not found")
+    
+#     return quiz.quiz
+
+# # ! get user ini buat kuis apa aja
+# @router.get("/{user_id}/quizzes_creator", response_model=list[Quiz_Pydantic])
+# async def get_user_participants(user_id: int):
+#     quizes = await Quiz.filter(creator=user_id).prefetch_related("participants__user")
+#     if not quizes:
+#         raise HTTPException(status_code=404, detail="No quizzes found for this user")
+#     return quizes
+
+# # ! get kuis yang diikuti oleh user
+# @router.get('/quizzes', response_model=list[Quiz_Pydantic])
+# async def get_user_quizzes(current_user: User = Depends(get_current_user)):
+#     print('user id : ',current_user.id)
+#     participations = await QuizParticipant.filter(user=current_user.id).prefetch_related("quiz")
+#     print(current_user.id)
+#     if not participations:
+#         raise HTTPException(status_code=404, detail="User's quizzes not found")
+    
+#     quizzes = [p.quiz for p in participations]
+    
+#     return quizzes 

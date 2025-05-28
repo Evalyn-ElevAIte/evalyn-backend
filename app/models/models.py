@@ -4,7 +4,7 @@ from app.utils.util import AnswerType, StatusType
 
 
 # ! helper functions
-
+# User model
 class User(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=255)
@@ -23,29 +23,54 @@ class User(Model):
     quizzes: fields.ReverseRelation["Quiz"] # reverse relation
     participants: fields.ReverseRelation["QuizParticipant"]
 
+# ! Quiz model, it can have many questions, many users (participants), but one creator
 class Quiz(Model):
     id = fields.IntField(pk=True)
-    creator = fields.ForeignKeyField("models.User", related_name="quizzes")
+    creator = fields.ForeignKeyField("models.User", related_name="creator")
     title = fields.CharField(max_length=64)
     description = fields.CharField(max_length=255)
+    # assignment_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
+    # student_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
+    lecturer_overall_notes = fields.TextField(null=True)
     join_code = fields.CharField(max_length=10, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
     questions: fields.ReverseRelation["Question"]
     participants: fields.ReverseRelation["QuizParticipant"]
 
+# ! Question model, it belongs to one quiz, it can have many responses
 class Question(Model):
     id = fields.IntField(pk=True)
     quiz = fields.ForeignKeyField("models.Quiz", related_name="questions")
     text = fields.TextField()
     type = fields.CharEnumField(AnswerType, default=AnswerType.TEXT)
     rubric = fields.CharField(max_length=100)  # can be list of rubrics or points
+    # rubric = fields.JSONField()
+    rubric_max_score = fields.IntField(default=0)  # Matches prompt_generator.py
     created_at = fields.DatetimeField(auto_now_add=True)
 
+    responses: fields.ReverseRelation["QuestionResponse"]
+
+# ! Participant model
 class QuizParticipant(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="participants")
-    quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
+    quiz = fields.ForeignKeyField("models.Quiz", related_name="quiz")
     status = fields.CharEnumField(StatusType)
+    score = fields.IntField(default=0)
     joined_at = fields.DatetimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ("user", "quiz")
 
+# ! Response model, basically an answer for a certain question in a certain quiz
+class QuestionResponse(Model):
+    id = fields.IntField(pk=True)
+    user = fields.ForeignKeyField("models.User", related_name="responden")
+    question = fields.ForeignKeyField("models.Question", related_name="question")
+    answer = fields.TextField()
+    
+    joined_at = fields.DatetimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ("user", "question")
