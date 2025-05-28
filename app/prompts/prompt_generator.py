@@ -45,9 +45,11 @@ demo_lecturer_overall_notes = "Please assess overall understanding of fundamenta
 def construct_overall_assignment_analysis_prompt_v3(
     assignment_id: str,
     student_id: str,
+    model_name:str,
     questions_and_answers: list[dict], # Each dict includes per-question rubric, lecturer_answer, etc.
     overall_assignment_title: str | None = None,
     lecturer_overall_notes: str | None = None
+    
 ) -> str:
     """
     Constructs a detailed prompt for AI analysis of an entire assignment (all questions),
@@ -138,7 +140,7 @@ def construct_overall_assignment_analysis_prompt_v3(
         "feedback_generation_confidence": 0.0
       },
       "processing_metadata": {
-        "model_used": "deepseek-chat",
+        "model_used": model_name,
         "prompt_version": "evalyn_overall_prompt_v3.0_deepseek"
       }
     }

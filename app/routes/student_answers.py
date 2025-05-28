@@ -1,29 +1,38 @@
 from fastapi import APIRouter, Depends, HTTPException
 from tortoise.exceptions import IntegrityError
-from app.models.models import QuestionResponse, Question, QuizParticipant
-from app.schemas.question_response import QuestionResponseCreate, QuestionResponseRead
+from app.models.models import QuestionResponse, Question, QuizParticipant, Quiz
+from app.schemas.question_response import (
+    QuestionResponseCreate,
+    QuestionResponseRead,
+    BulkQuestionResponseCreate,
+    QuestionResponseToAI,
+    BulkQuestionResponseToAI
+)
+from app.schemas.quiz import QuizReadWithQuestions
+from app.schemas.question import QuestionReadForStudent
 from app.dependencies import get_current_user
 from datetime import datetime
 from tortoise.contrib.pydantic import pydantic_model_creator
+from typing import List
 
 router = APIRouter()
 
 StudentResponse = pydantic_model_creator(QuestionResponse, name="QuestionResponse")
 
-@router.post("/", response_model=QuestionResponseRead)
-async def submit_answer(
-    response_data: QuestionResponseCreate,
+@router.post("/", response_model=List[QuestionResponseRead])
+async def submit_all_answers(
+    bulk_response_data: BulkQuestionResponseCreate,
     current_user=Depends(get_current_user)
 ):
-    # Check if question exists
-    question = await Question.get_or_none(id=response_data.question_id)
-    if not question:
-        raise HTTPException(status_code=404, detail="Question not found")
+    # Check if quiz exists
+    quiz = await Quiz.get_or_none(id=bulk_response_data.quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
 
     # Check if user is participant in the quiz
     participant = await QuizParticipant.get_or_none(
         user_id=current_user.id,
-        quiz_id=question.quiz_id
+        quiz_id=bulk_response_data.quiz_id
     )
     if not participant:
         raise HTTPException(
@@ -31,25 +40,45 @@ async def submit_answer(
             detail="You are not a participant in this quiz"
         )
 
-    try:
-        # Create response
-        response = await QuestionResponse.create(
-            user_id=current_user.id,
-            question_id=response_data.question_id,
-            answers=response_data.answers
-        )
-        await response.fetch_related('question')
-        return QuestionResponseRead(
-            id=response.id,
-            question_id=response.question.id,
-            answers=response.answers,
-            joined_at=response.joined_at
-        )
-    except IntegrityError:
-        raise HTTPException(
-            status_code=400,
-            detail="You have already answered this question"
-        )
+    # Get all questions for the specified quiz
+    quiz_questions = await Question.filter(quiz_id=bulk_response_data.quiz_id)
+    valid_question_ids = {q.id for q in quiz_questions}
+
+    submitted_responses = []
+    for response_data in bulk_response_data.responses:
+        # Validate if the question_id belongs to the specified quiz
+        if response_data.question_id not in valid_question_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Question with ID {response_data.question_id} does not belong to Quiz ID {bulk_response_data.quiz_id}"
+            )
+
+        try:
+            # Create response
+            response = await QuestionResponse.create(
+                user_id=current_user.id,
+                question_id=response_data.question_id,
+                answer=response_data.answer
+            )
+            await response.fetch_related('question')
+            submitted_responses.append(
+                QuestionResponseRead(
+                    id=response.id,
+                    question_id=response.question.id,
+                    question_text=response.question.text,
+                    question_type=response.question.type,
+                    answer=response.answer,
+                    joined_at=response.joined_at
+                )
+            )
+        except IntegrityError:
+            print(f"User {current_user.id} has already answered question {response_data.question_id}. Skipping.")
+            pass
+    
+    if not submitted_responses:
+        raise HTTPException(status_code=400, detail="No new answers were submitted or all were duplicates.")
+
+    return submitted_responses
 
 @router.get("/{question_id}", response_model=QuestionResponseRead)
 async def get_answer(
@@ -66,6 +95,6 @@ async def get_answer(
     return QuestionResponseRead(
         id=response.id,
         question_id=response.question.id,
-        answers=response.answers,
+        answer=response.answer,
         joined_at=response.joined_at
     )

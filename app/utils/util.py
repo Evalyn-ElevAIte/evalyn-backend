@@ -24,21 +24,6 @@ class StatusType(str, Enum):
 # password helper function
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class AnswerType(str, Enum):
-    TEXT  = "text"
-    VIDEO = "video"
-    PDF   = "pdf"
-    CHOICE = "choice"
-    
-class StatusType(str, Enum):
-    # TEACHER
-    PUBLISHED  = "published"
-    DONE = "done"
-    # STUDENT
-    UNFINISHED   = "unfinished"
-    SUBMITED = "submited"
-    GRADED = "graded"
-
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
