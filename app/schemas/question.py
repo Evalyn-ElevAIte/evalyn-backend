@@ -28,7 +28,7 @@ class QuestionRead(BaseModel):
     text: str
     type: AnswerType
     options: Optional[List[str]] = None
-    expected_anwer: Optional[str] = None
+    expected_answer: Optional[List[str]] = None
     rubric: str
     rubric_max_score: int
     created_at: datetime
@@ -36,3 +36,13 @@ class QuestionRead(BaseModel):
     class Config:
         from_attributes = True
 
+class QuestionReadForStudent(BaseModel):
+    id: int
+    quiz_id: int
+    text: str
+    type: AnswerType
+    options: Optional[List[str]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
