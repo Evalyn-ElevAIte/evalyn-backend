@@ -13,6 +13,7 @@ from app.schemas.question_response import (
     QuestionResponseToAI,
     BulkQuestionResponseToAI
 )
+from app.services.assesment_service import AssessmentService
 
 router = APIRouter()
 
@@ -47,7 +48,7 @@ async def analyze_quiz(
                 detail="Student is not a participant in this quiz"
             )
 
-        # Get all questions and student responses for this quiz
+        # Get all questions and student responses for this quiz from table (temporary)
         responses = await QuestionResponse.filter(
             user_id=current_user.id,
             question__quiz_id=quiz_id
@@ -103,10 +104,12 @@ async def analyze_quiz(
         # Get LLM instance and analyze
         # llm = get_llm_api_call_function(model_name)
         analysis_result =  get_llm_api_call_function(prompt,model_name)
+        assessment = await AssessmentService.create_assessment_from_json(analysis_result)
         
         return {
             "success": True,
             "analysis": analysis_result,
+            "assessment_id":assessment,
             "model_used": model_name,
             "quiz_id": quiz.id,
             "student_id": current_user.id
