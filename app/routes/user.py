@@ -2,19 +2,20 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from app.models.models import User, Quiz, QuizParticipant
 from app.dependencies import get_current_user
-from app.schemas.quiz import QuizWithStatus, QuizWithStatusCreator
-
+from app.schemas.quiz import QuizWithStatusAll, QuizWithStatus, QuizWithStatusCreator
+from itertools import chain
 from tortoise.contrib.pydantic import pydantic_model_creator
 
 # router = APIRouter(dependencies=[Depends(get_current_user)])
 router = APIRouter()
 
 # ! Create a Pydantic serializer for the User model
-User_Pydantic_Read = pydantic_model_creator(User, name="UserNoPass", exclude=("password"))
+User_Read_Plain = pydantic_model_creator(User, name="UserPlain")
+User_Pydantic_Read = pydantic_model_creator(User, name="UserNoPass", exclude=("password","id"))
 Quiz_Pydantic = pydantic_model_creator(Quiz, name="Quiz")
 
 # ! get all user
-@router.get("/all_users", response_model=list[User_Pydantic_Read])
+@router.get("/all_users", response_model=list[User_Read_Plain])
 async def get_users():
     return await User.all()
 
@@ -22,6 +23,39 @@ async def get_users():
 @router.get('/', response_model=User_Pydantic_Read)
 async def get_user(current_user: User = Depends(get_current_user)):
     return current_user
+
+# ! get seluruh kuis user (creator dan participant)
+@router.get('/quizzes/all', response_model=list[QuizWithStatusAll])
+async def get_all_user_quizzes(current_user: User = Depends(get_current_user)):
+    # Quizzes where user is a participant
+    participations = await QuizParticipant.filter(user=current_user.id).prefetch_related("quiz")
+    
+    # Quizzes where user is the creator
+    created_quizzes = await Quiz.filter(creator=current_user.id)
+
+    # Combine both, converting them to a unified QuizWithStatus structure
+    combined = []
+
+    for p in participations:
+        combined.append({
+            "title": p.quiz.title,
+            "description": p.quiz.description,
+            "created_at": p.quiz.created_at,
+            "status": p.status
+        })
+
+    for q in created_quizzes:
+        combined.append({
+            "title": q.title,
+            "description": q.description,
+            "created_at": q.created_at,
+            "completed": q.completed
+        })
+
+    # Sort all quizzes by created_at descending
+    combined.sort(key=lambda x: x["created_at"], reverse=True)
+
+    return combined
 
 # ! get kuis yang diikuti oleh user
 @router.get('/quizzes', response_model=list[QuizWithStatus])

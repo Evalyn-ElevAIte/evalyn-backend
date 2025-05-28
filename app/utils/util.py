@@ -7,14 +7,15 @@ from enum import Enum
 # helper class
 class AnswerType(str, Enum):
     TEXT  = "text"
-    VIDEO = "video"
-    PDF   = "pdf"
-    CHOICE = "choice"
+    # VIDEO = "video"
+    # PDF   = "pdf"
+    MULTI_CHOICE = "multi_choice"
+    SINGLE_CHOICE = "single_choice"
     
 class StatusType(str, Enum):
-    # TEACHER
-    PUBLISHED  = "published"
-    DONE = "done"
+    # # TEACHER
+    # PUBLISHED  = "published"
+    # DONE = "done"
     # STUDENT
     UNFINISHED   = "unfinished"
     SUBMITED = "submited"

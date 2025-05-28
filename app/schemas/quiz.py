@@ -2,11 +2,12 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from app.utils.util import StatusType
+from typing import Optional
 
 class QuizCreate(BaseModel):
     title: str
     description: str
-    status: StatusType = Field(..., description="Status of the quiz")
+    # status: StatusType = Field(..., description="Status of the quiz")
     lecturer_overall_notes: str
     start_time: datetime | None = None
     end_time: datetime | None = None
@@ -22,6 +23,13 @@ class QuizRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class QuizWithStatusAll(BaseModel):
+    title: str
+    description: str
+    created_at: datetime
+    status: Optional[StatusType] = None  # Nullable field
+    completed: Optional[bool] = None     # Nullable field
 
 class QuizWithStatus(BaseModel):
     title: str

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from app.db.db import init_db, close_db
-from app.routes import quiz, user, userAuth, question
+from app.routes import quiz, user, userAuth, question, quiz_participants
 
 app = FastAPI()
 
@@ -8,6 +8,8 @@ app.include_router(userAuth.router, prefix="/api/auth", tags=["userAuth"])
 app.include_router(user.router, prefix="/api/user", tags=["user"])
 app.include_router(quiz.router, prefix="/api/quiz", tags=["quiz"])
 app.include_router(question.router, prefix="/api/question", tags=["question"])
+app.include_router(quiz_participants.router, prefix="/api/quiz_participants", tags=["quiz_participants"])
+
 
 # startup
 @app.on_event("startup")
