@@ -47,9 +47,13 @@ class Question(Model):
     quiz = fields.ForeignKeyField("models.Quiz", related_name="questions")
     text = fields.TextField()
     type = fields.CharEnumField(AnswerType, default=AnswerType.TEXT)
-    rubric = fields.CharField(max_length=100)  # can be list of rubrics or points
-    # rubric = fields.JSONField()
-    rubric_max_score = fields.IntField(default=0)  # Matches prompt_generator.py
+    
+    # optional if it is multiple choice
+    options = fields.JSONField(null=True)  # list of strings for choices
+    expected_answer = fields.JSONField(null=True)
+    
+    rubric = fields.CharField(max_length=100)
+    rubric_max_score = fields.IntField(default=100)
     created_at = fields.DatetimeField(auto_now_add=True)
 
     responses: fields.ReverseRelation["QuestionResponse"]

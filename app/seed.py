@@ -47,10 +47,10 @@ async def seed():
     quiz10 = await Quiz.create(title="Philosophy Quiz", description="test Philosophy", join_code="PHIL789", creator=user5, lecturer_overall_notes='ini notes dari lecturer untuk philosophy', completed=False, start_time=random_datetime(), end_time=random_datetime())
 
     # Create Questionss
-    await Question.create(quiz=quiz1, text="What is 2+2?", type=AnswerType.TEXT, rubric="Must be good listener", rubric_max_score=10)
-    await Question.create(quiz=quiz2, text="What is H2O?", type=AnswerType.TEXT, rubric="specific and definable", rubric_max_score=8)
-    await Question.create(quiz=quiz3, text="What is 2+2?", type=AnswerType.TEXT, rubric="details", rubric_max_score=7)
-    await Question.create(quiz=quiz4, text="What is H2O?", type=AnswerType.TEXT, rubric="critical thinking", rubric_max_score=9)
+    # await Question.create(quiz=quiz1, text="What is 2+2?", type=AnswerType.TEXT, rubric="Must be good listener", rubric_max_score=10)
+    # await Question.create(quiz=quiz2, text="What is H2O?", type=AnswerType.TEXT, rubric="specific and definable", rubric_max_score=8)
+    # await Question.create(quiz=quiz3, text="What is 2+2?", type=AnswerType.TEXT, rubric="details", rubric_max_score=7)
+    # await Question.create(quiz=quiz4, text="What is H2O?", type=AnswerType.TEXT, rubric="critical thinking", rubric_max_score=9)
 
     # Add Participants
     for i in range(1, 11):
