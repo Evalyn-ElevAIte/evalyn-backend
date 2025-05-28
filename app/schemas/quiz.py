@@ -9,6 +9,9 @@ class QuizCreate(BaseModel):
     description: str
     status: StatusType = Field(..., description="Status of the quiz")
     lecturer_overall_notes: str
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+    completed: bool = False
 
 class QuizRead(BaseModel):
     id: int
@@ -26,4 +29,11 @@ class QuizWithStatus(BaseModel):
     description: str
     created_at: datetime
     status: StatusType
+
+class QuizWithStatusCreator(BaseModel):
+    title: str
+    description: str
+    created_at: datetime
+    completed: bool
+    
 

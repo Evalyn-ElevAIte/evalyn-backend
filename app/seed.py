@@ -25,16 +25,26 @@ async def seed():
     user10 = await User.create(name="Henry Clark", email="henry@example.com", password=hash_password("admin"))
     
     # Create Quizzes
-    quiz1 = await Quiz.create(title="Math Quiz", description="test math", join_code="MATH123", creator=user1, lecturer_overall_notes='test notes')
-    quiz2 = await Quiz.create(title="Science Quiz", description="test Science", join_code="SCI456", creator=user2, lecturer_overall_notes='ini notes dari lecturer')
-    quiz3 = await Quiz.create(title="History Quiz", description="test History", join_code="HIST789", creator=user3, lecturer_overall_notes='ini notes dari lecturer untuk historia')
-    quiz4 = await Quiz.create(title="Geography Quiz", description="test Geography", join_code="GEO999", creator=user4, lecturer_overall_notes='ini notes dari lecturer untuk geographia')
-    quiz5 = await Quiz.create(title="Art Quiz", description="test Art", join_code="ART101", creator=user5, lecturer_overall_notes='ini notes dari lecturer untuk art')
-    quiz6 = await Quiz.create(title="Programming Quiz", description="test Programming", join_code="PROG456", creator=user1, lecturer_overall_notes='ini notes dari lecturer untuk programming')
-    quiz7 = await Quiz.create(title="Biology Quiz", description="test Biology", join_code="BIO789", creator=user2, lecturer_overall_notes='ini notes dari lecturer untuk biology')
-    quiz8 = await Quiz.create(title="Physics Quiz", description="test Physics", join_code="PHYS123", creator=user3, lecturer_overall_notes='ini notes dari lecturer untuk physics')
-    quiz9 = await Quiz.create(title="Economy Quiz", description="test Economy", join_code="ECON456", creator=user4, lecturer_overall_notes='ini notes dari lecturer untuk economy')
-    quiz10 = await Quiz.create(title="Philosophy Quiz", description="test Philosophy", join_code="PHIL789", creator=user5, lecturer_overall_notes='ini notes dari lecturer untuk philosophy')
+    import random
+    from datetime import datetime, timedelta
+
+    def random_datetime():
+        start = datetime.now() - timedelta(days=30)
+        end = datetime.now()
+        return start + timedelta(
+            seconds=random.randint(0, int((end-start).total_seconds())),
+        )
+
+    quiz1 = await Quiz.create(title="Math Quiz", description="test math", join_code="MATH123", creator=user1, lecturer_overall_notes='test notes', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz2 = await Quiz.create(title="Science Quiz", description="test Science", join_code="SCI456", creator=user2, lecturer_overall_notes='ini notes dari lecturer', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz3 = await Quiz.create(title="History Quiz", description="test History", join_code="HIST789", creator=user3, lecturer_overall_notes='ini notes dari lecturer untuk historia', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz4 = await Quiz.create(title="Geography Quiz", description="test Geography", join_code="GEO999", creator=user4, lecturer_overall_notes='ini notes dari lecturer untuk geographia', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz5 = await Quiz.create(title="Art Quiz", description="test Art", join_code="ART101", creator=user5, lecturer_overall_notes='ini notes dari lecturer untuk art', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz6 = await Quiz.create(title="Programming Quiz", description="test Programming", join_code="PROG456", creator=user1, lecturer_overall_notes='ini notes dari lecturer untuk programming', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz7 = await Quiz.create(title="Biology Quiz", description="test Biology", join_code="BIO789", creator=user2, lecturer_overall_notes='ini notes dari lecturer untuk biology', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz8 = await Quiz.create(title="Physics Quiz", description="test Physics", join_code="PHYS123", creator=user3, lecturer_overall_notes='ini notes dari lecturer untuk physics', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz9 = await Quiz.create(title="Economy Quiz", description="test Economy", join_code="ECON456", creator=user4, lecturer_overall_notes='ini notes dari lecturer untuk economy', completed=False, start_time=random_datetime(), end_time=random_datetime())
+    quiz10 = await Quiz.create(title="Philosophy Quiz", description="test Philosophy", join_code="PHIL789", creator=user5, lecturer_overall_notes='ini notes dari lecturer untuk philosophy', completed=False, start_time=random_datetime(), end_time=random_datetime())
 
     # Create Questionss
     await Question.create(quiz=quiz1, text="What is 2+2?", type=AnswerType.TEXT, rubric="Must be good listener", rubric_max_score=10)

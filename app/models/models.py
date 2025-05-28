@@ -33,6 +33,9 @@ class Quiz(Model):
     # student_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
     lecturer_overall_notes = fields.TextField(null=True)
     join_code = fields.CharField(max_length=10, unique=True)
+    completed = fields.BooleanField(default=False) # true = time is up
+    start_time = fields.DatetimeField(null=True)
+    end_time = fields.DatetimeField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
     questions: fields.ReverseRelation["Question"]
@@ -55,7 +58,7 @@ class Question(Model):
 class QuizParticipant(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="participants")
-    quiz = fields.ForeignKeyField("models.Quiz", related_name="quiz")
+    quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
     status = fields.CharEnumField(StatusType)
     score = fields.IntField(default=0)
     joined_at = fields.DatetimeField(auto_now_add=True)
