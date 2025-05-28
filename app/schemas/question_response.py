@@ -4,7 +4,7 @@ from typing import Optional, List
 
 class QuestionResponseBase(BaseModel):
     question_id: int = Field(..., description="ID of the question being answered")
-    answer: dict = Field(..., description="Student's answer as a dictionary")
+    answer: List[str] = Field(..., description="Student's answer as a List")
 
 class QuestionResponseToAI(QuestionResponseBase):
     question_text: str = Field(..., description="Text of the question being answered")
@@ -26,8 +26,8 @@ class QuestionResponseRead(QuestionResponseBase):
 
 class BulkQuestionResponseCreate(BaseModel):
     quiz_id: int = Field(..., description="ID of the quiz for which answers are being submitted")
-    title: str = Field(None, description="Title of the quiz")
-    description: str = Field(None, description="Description of the quiz")
+    title: str = Field(..., description="Title of the quiz")
+    description: str = Field(..., description="Description of the quiz")
     responses: List[QuestionResponseCreate] = Field(..., description="List of student responses")
 
 class BulkQuestionResponseToAI(BaseModel):

@@ -106,7 +106,6 @@ def construct_overall_assignment_analysis_prompt_v3(
         "summary_of_performance": "...",
         "general_positive_feedback": "...",
         "general_areas_for_improvement": "...",
-        "suggested_next_steps_or_resources": ["...", "..."]
       },
       "question_assessments": [ # Array for individual question assessments
         {
@@ -205,8 +204,8 @@ Based on all the information above, perform the following analysis and return th
     * Populate the `overall_assessment` object in the JSON with this information.
 
 5.  **JSON Identifiers and Timestamps:**
-    * Fill in `student_identifier` and `assignment_identifier`.
-    * Use "overall_assignment" for `question_identifier` in the root of the JSON.
+    * Fill in `student_id` and `quiz_id`.
+    * Use "overall_assignment" for `question_id` in the root of the JSON.
     * Generate current UTC timestamps for `assessment_timestamp_utc`. Use a placeholder or the provided `submission_timestamp_utc` if relevant for the whole assignment.
 
 **Required JSON Output Format:**
