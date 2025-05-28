@@ -1,32 +1,11 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel
 from enum import Enum
-from datetime import datetime
-
-# (reuse your StatusType enum if you already defined one; otherwise, re‐import it)
-from models import StatusType  
-
-class QuizParticipantBase(BaseModel):
-    user_id: int = Field(..., description="ID of the user joining the quiz")
-    quiz_id: int = Field(..., description="ID of the quiz to join")
-    status: StatusType = StatusType.UNFINISHED
-
-    class Config:
-        from_attributes = True
 
 
-# class QuizParticipantCreate(QuizParticipantBase):
-#     """
-#     All fields required to create a new QuizParticipant.
-#     Inherits user_id, quiz_id, status from QuizParticipantBase.
-#     """
-#     pass
+class JoinQuizRequest(BaseModel):
+    join_code: str
 
 
-# class QuizParticipantRead(QuizParticipantBase):
-#     """
-#     Fields returned to the client after creation/read.
-#     Adds `id` and `joined_at` (auto‐populated by the DB).
-#     """
-#     id: int
-#     joined_at: datetime
+class JoinQuizResponse(BaseModel):
+    message: str
+    participant_id: int

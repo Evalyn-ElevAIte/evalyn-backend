@@ -75,7 +75,7 @@ class QuestionResponse(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="responden")
     question = fields.ForeignKeyField("models.Question", related_name="question")
-    answer = fields.TextField()
+    answer = fields.JSONField()
     
     joined_at = fields.DatetimeField(auto_now_add=True)
     

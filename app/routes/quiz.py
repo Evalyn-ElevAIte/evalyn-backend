@@ -21,6 +21,14 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 async def get_quizzes():
     return await Quiz.all()
 
+# ! get a single quiz by its ID
+@router.get("/{quiz_id}", response_model=Quiz_Pydantic)
+async def get_quiz_by_id(quiz_id: int):
+    quiz = await Quiz.get_or_none(id=quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+    return await Quiz_Pydantic.from_tortoise_orm(quiz)
+
 # ! create a quiz with questions
 @router.post("/create-with-questions")
 async def create_quiz_with_questions(
@@ -37,7 +45,7 @@ async def create_quiz_with_questions(
                 lecturer_overall_notes=payload.lecturer_overall_notes,
                 start_time=payload.start_time,
                 end_time=payload.end_time,
-                completed=payload.completed,
+                # completed=payload.completed,
                 join_code=code,
             )
             break

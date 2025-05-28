@@ -14,7 +14,7 @@ class QuestionCreate(BaseModel):
 class QuizWithQuestionsCreate(BaseModel):
     title: str
     description: str
-    status: StatusType
+    # status: StatusType
     lecturer_overall_notes: Optional[str] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
