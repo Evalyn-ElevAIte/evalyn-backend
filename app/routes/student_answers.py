@@ -19,6 +19,50 @@ router = APIRouter()
 
 StudentResponse = pydantic_model_creator(QuestionResponse, name="QuestionResponse")
 
+@router.get("/quiz/{quiz_id}", response_model=QuizReadWithQuestions)
+async def get_quiz_with_questions(
+    quiz_id: int,
+    current_user=Depends(get_current_user)
+):
+    # Check if quiz exists
+    quiz = await Quiz.get_or_none(id=quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # Check if user is participant in the quiz
+    participant = await QuizParticipant.get_or_none(
+        user_id=current_user.id,
+        quiz_id=quiz_id
+    )
+    if not participant:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not a participant in this quiz"
+        )
+
+    # Get all questions for the specified quiz
+    questions = await Question.filter(quiz_id=quiz_id)
+    await quiz.fetch_related('creator')
+    
+    return QuizReadWithQuestions(
+        id=quiz.id,
+        title=quiz.title,
+        creator_id=quiz.creator.id,
+        description=quiz.description,
+        join_code=quiz.join_code,
+        created_at=quiz.created_at,
+        questions=[
+            QuestionReadForStudent(
+                id=q.id,
+                quiz_id=q.quiz_id,
+                text=q.text,
+                type=q.type,
+                options=q.options,
+                created_at=q.created_at
+            ) for q in questions
+        ]
+    )
+
 @router.post("/", response_model=List[QuestionResponseRead])
 async def submit_all_answers(
     bulk_response_data: BulkQuestionResponseCreate,
@@ -80,21 +124,3 @@ async def submit_all_answers(
 
     return submitted_responses
 
-@router.get("/{question_id}", response_model=QuestionResponseRead)
-async def get_answer(
-    question_id: int,
-    current_user=Depends(get_current_user)
-):
-    response = await QuestionResponse.get_or_none(
-        user_id=current_user.id,
-        question_id=question_id
-    )
-    if not response:
-        raise HTTPException(status_code=404, detail="Answer not found")
-    await response.fetch_related('question')
-    return QuestionResponseRead(
-        id=response.id,
-        question_id=response.question.id,
-        answer=response.answer,
-        joined_at=response.joined_at
-    )

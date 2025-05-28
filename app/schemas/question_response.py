@@ -26,14 +26,14 @@ class QuestionResponseRead(QuestionResponseBase):
 
 class BulkQuestionResponseCreate(BaseModel):
     quiz_id: int = Field(..., description="ID of the quiz for which answers are being submitted")
-    title: Optional[str] = Field(None, description="Title of the quiz")
-    description: Optional[str] = Field(None, description="Description of the quiz")
+    title: str = Field(None, description="Title of the quiz")
+    description: str = Field(None, description="Description of the quiz")
     responses: List[QuestionResponseCreate] = Field(..., description="List of student responses")
 
 class BulkQuestionResponseToAI(BaseModel):
     quiz_id: int = Field(..., description="ID of the quiz for which answers are being submitted")
-    title: Optional[str] = Field(None, description="Title of the quiz")
-    description: Optional[str] = Field(None, description="Description of the quiz")
+    title: str = Field(None, description="Title of the quiz")
+    description: str = Field(None, description="Description of the quiz")
     lecturer_overall_notes: Optional[str] = Field(None, description="Overall notes from the lecturer")
     student_id: int = Field(...,description = "User ID")
     responses: List[QuestionResponseToAI] = Field(..., description="List of student responses")
