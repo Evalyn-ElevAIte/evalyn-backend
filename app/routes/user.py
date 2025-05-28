@@ -74,27 +74,15 @@ async def get_user_quizzes(current_user: User = Depends(get_current_user)):
         for p in participations
     ]
     
-    return result
+    return result 
 
 # ! get user ini buat kuis apa aja
-@router.get('/quizzes_creator', response_model=list[QuizWithStatusCreator])
+@router.get('/quizzes_creator', response_model=list[Quiz_Pydantic])
 async def get_user_quizzes_creator(current_user: User = Depends(get_current_user)):
-    quizes = await Quiz.filter(creator=current_user.id).prefetch_related("participants").order_by("-created_at")
-    
+    quizes = await Quiz.filter(creator=current_user.id).prefetch_related("participants__user")
     if not quizes:
         raise HTTPException(status_code=404, detail="No quizzes found for this user")
-    
-    result = [
-        QuizWithStatusCreator(
-            title=p.title,
-            description=p.description,
-            created_at=p.created_at,
-            completed=p.completed
-        )
-        for p in quizes
-    ]
-    
-    return result
+    return quizes
     
 # # ! get data kuis yang diikuti oleh user
 # @router.get("/{user_id}/quizzes/{quiz_id}", response_model=Quiz_Pydantic)
