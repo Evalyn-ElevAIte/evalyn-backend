@@ -28,8 +28,6 @@ class Quiz(Model):
     creator = fields.ForeignKeyField("models.User", related_name="quizzes")
     title = fields.CharField(max_length=64)
     description = fields.CharField(max_length=255)
-    assignment_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
-    student_id = fields.CharField(max_length=255)  # Matches prompt_generator.py
     lecturer_overall_notes = fields.TextField(null=True)
     join_code = fields.CharField(max_length=10, unique=True)
     created_at = fields.DatetimeField(auto_now_add=True)
@@ -44,7 +42,9 @@ class Question(Model):
     text = fields.TextField()
     type = fields.CharField(max_length=50)  # e.g., "text", "video", "pdf"
     student_answer_text = fields.TextField(null=True)  # Matches prompt_generator.py
-    lecturer_answer_text = fields.TextField(null=True)  # Matches prompt_generator.py
+    lecturer_answer_text = fields.TextField(null=True)  # For text/essay answers
+    options = fields.TextField(null=True)  # Stores JSON string of options for multiple choice
+    correct_answer_mc = fields.TextField(null=True) # Stores the correct answer for multiple choice
     rubric = fields.TextField()  # Matches prompt_generator.py
     rubric_max_score = fields.IntField(default=0)  # Matches prompt_generator.py
     created_at = fields.DatetimeField(auto_now_add=True)
