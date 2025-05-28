@@ -4,7 +4,6 @@ from datetime import datetime
 from app.utils.util import StatusType
 
 class QuizCreate(BaseModel):
-    creator_id: int
     title: str
     description: str
     status: StatusType = Field(..., description="Status of the quiz")
