@@ -5,6 +5,7 @@ from tortoise.exceptions import DoesNotExist, IntegrityError
 from tortoise.queryset import QuerySet
 from datetime import datetime
 import logging
+from fastapi import HTTPException
 
 # Import models and schemas (assuming they're in separate files)
 from app.models.models import (
@@ -13,6 +14,8 @@ from app.models.models import (
     RubricComponentFeedback,
     StudentKeyPoint,
     MissingConcept,
+    User, # Import User model
+    Quiz, # Import Quiz model
 )
 from app.schemas.assesment import (
     AssessmentCreate,
@@ -61,12 +64,19 @@ class AssessmentService:
         """
         async with in_transaction() as conn:
             try:
+                # Fetch User and Quiz objects
+                user_obj = await User.get_or_none(id=assessment_data.user_id)
+                if not user_obj:
+                    raise DoesNotExist(f"User with ID {assessment_data.user_id} not found")
+
+                quiz_obj = await Quiz.get_or_none(id=assessment_data.quiz_id)
+                if not quiz_obj:
+                    raise DoesNotExist(f"Quiz with ID {assessment_data.quiz_id} not found")
+
                 # Create main assessment
                 assessment = await Assessment.create(
-                    assessment_id=assessment_data.assessment_id,
-                    student_identifier=assessment_data.student_id,
-                    assignment_identifier=assessment_data.assignment_identifier,
-                    question_identifier=assessment_data.question_identifier,
+                    user=user_obj, # Use the fetched User object
+                    quiz=quiz_obj, # Use the fetched Quiz object
                     submission_timestamp_utc=assessment_data.submission_timestamp_utc,
                     assessment_timestamp_utc=assessment_data.assessment_timestamp_utc,
                     overall_score=assessment_data.overall_assessment.score,
@@ -140,39 +150,37 @@ class AssessmentService:
                             using_db=conn,
                         )
 
-                
-
                 # Return the created assessment with all relations
-                return await AssessmentService.get_assessment_by_id(
-                    assessment_data.assessment_id
-                )
+                return await AssessmentService.get_assessment_by_id(assessment.id)
 
             except IntegrityError as e:
                 logger.error(f"Integrity error creating assessment: {e}")
-                return None
+                raise HTTPException(status_code=400, detail=str(e))
+            except DoesNotExist as e:
+                logger.error(f"Related object not found: {e}")
+                raise HTTPException(status_code=404, detail=str(e))
             except Exception as e:
                 logger.error(f"Unexpected error creating assessment: {e}")
-                return None
+                raise HTTPException(status_code=500, detail=str(e))
 
     @staticmethod
-    async def get_assessment_by_id(assessment_id: str) -> Optional[AssessmentResponse]:
+    async def get_assessment_by_id(id: int) -> Optional[AssessmentResponse]:
         """
-        Get complete assessment by ID with all related data, supposed to be call by student_identifier / student_id
+        Get complete assessment by ID with all related data
         """
         try:
             assessment = await Assessment.get(
-                assessment_id=assessment_id
+                id=id
             ).prefetch_related(
                 "question_assessments__rubric_components",
                 "question_assessments__key_points",
                 "question_assessments__missing_concepts",
-                "suggested_resources",
             )
 
             return AssessmentResponse.from_orm(assessment)
 
         except DoesNotExist:
-            logger.warning(f"Assessment with ID {assessment_id} not found")
+            logger.warning(f"Assessment with ID {id} not found")
             return None
         except Exception as e:
             logger.error(f"Error retrieving assessment: {e}")
@@ -189,14 +197,14 @@ class AssessmentService:
             query = Assessment.all()
 
             # Apply filters
-            if filter_params.student_identifier:
+            if filter_params.user_id:
                 query = query.filter(
-                    student_identifier=filter_params.student_identifier
+                    user_id=filter_params.user_id
                 )
 
-            if filter_params.assignment_identifier:
+            if filter_params.quiz_id:
                 query = query.filter(
-                    assignment_identifier=filter_params.assignment_identifier
+                    quiz_id=filter_params.quiz_id
                 )
 
             if filter_params.min_score is not None:
@@ -223,7 +231,6 @@ class AssessmentService:
                     "question_assessments__rubric_components",
                     "question_assessments__key_points",
                     "question_assessments__missing_concepts",
-                    "suggested_resources",
                 )
             )
 
@@ -237,23 +244,23 @@ class AssessmentService:
 
     @staticmethod
     async def get_student_assessments(
-        student_id: str, limit: int = 10
+        user_id: int, limit: int = 10
     ) -> List[AssessmentSummary]:
         """
         Get recent assessments summary for a student
         """
         try:
             assessments = (
-                await Assessment.filter(student_identifier=student_id)
+                await Assessment.filter(user_id=user_id)
                 .order_by("-assessment_timestamp_utc")
                 .limit(limit)
             )
 
             return [
                 AssessmentSummary(
-                    assessment_id=assessment.assessment_id,
-                    student_identifier=assessment.student_identifier,
-                    assignment_identifier=assessment.assignment_identifier,
+                    id=assessment.id,
+                    user_id=assessment.user_id,
+                    quiz_id=assessment.quiz_id,
                     overall_score=assessment.overall_score,
                     overall_max_score=assessment.overall_max_score,
                     score_percentage=round(
@@ -288,14 +295,12 @@ class AssessmentService:
             query = Assessment.all()
 
             # Apply filters
-            if student_filter.student_identifiers:
-                query = query.filter(
-                    student_identifier__in=student_filter.student_ids
-                )
+            if student_filter.user_ids:
+                query = query.filter(user_id__in=student_filter.user_ids)
 
-            if student_filter.assignment_identifier:
+            if student_filter.quiz_id:
                 query = query.filter(
-                    assignment_identifier=student_filter.assignment_identifier
+                    quiz_id=student_filter.quiz_id
                 )
 
             if student_filter.from_date:
@@ -312,7 +317,7 @@ class AssessmentService:
             from tortoise.functions import Count, Avg, Max
 
             results = (
-                await query.group_by("student_identifier")
+                await query.group_by("user_id")
                 .annotate(
                     total_assessments=Count("id"),
                     average_score=Avg("overall_score"),
@@ -320,7 +325,7 @@ class AssessmentService:
                     latest_assessment_date=Max("assessment_timestamp_utc"),
                 )
                 .values(
-                    "student_identifier",
+                    "user_id",
                     "total_assessments",
                     "average_score",
                     "average_max_score",
@@ -330,7 +335,7 @@ class AssessmentService:
 
             return [
                 StudentPerformanceSummary(
-                    student_identifier=result["student_identifier"],
+                    user_id=result["user_id"],
                     total_assessments=result["total_assessments"],
                     average_score=round(result["average_score"], 2),
                     average_max_score=round(result["average_max_score"], 2),
@@ -356,35 +361,35 @@ class AssessmentService:
             return []
 
     @staticmethod
-    async def update_assessment_score(assessment_id: str, new_score: int) -> bool:
+    async def update_assessment_score(id: int, new_score: int) -> bool:
         """
         Update overall score for an assessment
         """
         try:
-            assessment = await Assessment.get(assessment_id=assessment_id)
+            assessment = await Assessment.get(id=id)
             assessment.overall_score = new_score
             await assessment.save()
             return True
 
         except DoesNotExist:
-            logger.warning(f"Assessment with ID {assessment_id} not found")
+            logger.warning(f"Assessment with ID {id} not found")
             return False
         except Exception as e:
             logger.error(f"Error updating assessment score: {e}")
             return False
 
     @staticmethod
-    async def delete_assessment(assessment_id: str) -> bool:
+    async def delete_assessment(id: int) -> bool:
         """
         Delete assessment and all related data
         """
         try:
-            assessment = await Assessment.get(assessment_id=assessment_id)
+            assessment = await Assessment.get(id=id)
             await assessment.delete()
             return True
 
         except DoesNotExist:
-            logger.warning(f"Assessment with ID {assessment_id} not found")
+            logger.warning(f"Assessment with ID {id} not found")
             return False
         except Exception as e:
             logger.error(f"Error deleting assessment: {e}")

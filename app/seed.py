@@ -58,6 +58,24 @@ async def seed():
         options=["Paris", "Berlin", "Madrid", "Rome"],
         expected_answer=["Paris"]
     )
+    question11 = await Question.create(
+        quiz=quiz1,
+        text="What is the capital of Indonesia?",
+        type=AnswerType.SINGLE_CHOICE,
+        rubric="Must be precise",
+        rubric_max_score=10,
+        options=["Paris", "Berlin", "Madrid", "Jakarta"],
+        expected_answer=["Jakarta"]
+    )
+    question12 = await Question.create(
+        quiz=quiz1,
+        text="What is the capital of US?",
+        type=AnswerType.SINGLE_CHOICE,
+        rubric="Must be precise",
+        rubric_max_score=10,
+        options=["Paris", "Berlin", "Madrid", "New York"],
+        expected_answer=["New York"]
+    )
     question2 = await Question.create(
         quiz=quiz2,
         text="Who wrote 'Hamlet'?",
@@ -150,6 +168,22 @@ async def seed():
         question=question1,
         answer={
             "text": "Democracy is based on fairness, free elections, and human rights."
+        }
+    )
+
+    await QuestionResponse.create(
+        user=user1,
+        question=question11,
+        answer={
+            "choice": "Paris"
+        }
+    )
+
+    await QuestionResponse.create(
+        user=user1,
+        question=question12,
+        answer={
+            "choice": "Jakarta"
         }
     )
 

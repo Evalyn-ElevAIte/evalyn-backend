@@ -1,55 +1,16 @@
-import json # Only needed for example JSON string formatting in the prompt
-
-# --- DEMO DATA (as provided by user, slightly adjusted for consistency) ---
-# 1. assignment_id
-demo_assignment_id = "CHEM101_MIDTERM_S24"
-
-# 2. student_id
-demo_student_id = "STUDENT_007"
-
-# 3. questions_and_answers
-demo_questions_and_answers = [
-    {
-        "question_id": "CHEM101_Q1",
-        "question_text": "Define 'mole' in chemistry and explain its significance with Avogadro's number.",
-        "student_answer_text": "A mole is like a dozen, but for atoms. It's a specific number of particles, which is Avogadro's number, 6.022 x 10^23. It's significant because it lets us weigh atoms and molecules by relating atomic mass units to grams.",
-        "lecturer_answer_text": "A mole is a unit in chemistry that represents 6.022 x 10^23 particles, atoms, or molecules. It allows chemists to count particles by weighing them. Avogadro's number is crucial because it provides a bridge between the atomic scale and macroscopic quantities.",
-        "rubric":"Accuracy of definition, relevance to Avogadro's number, clarity of explanation", # Example of a descriptive rubric
-        "rubric_max_score": 10
-    },
-    {
-        "question_id": "CHEM101_Q2",
-        "question_text": "Describe the difference between an ionic bond and a covalent bond. Provide an example for each.",
-        "student_answer_text": "Ionic bonds are when atoms give or take electrons, like NaCl where Na gives an electron to Cl. Covalent bonds are when atoms share electrons, like in H2O where oxygen shares electrons with two hydrogens. Ionic bonds are between metals and nonmetals, covalent usually between nonmetals.",
-        "lecturer_answer_text": "Ionic bonds result from the electrostatic attraction between oppositely charged ions, formed by the complete transfer of one or more electrons from a metal to a nonmetal (e.g., NaCl). Covalent bonds involve the sharing of electron pairs between two nonmetal atoms to achieve stable electron configurations (e.g., H2O). Key differences include the nature of electron involvement (transfer vs. sharing) and the types of elements typically involved.",
-        "rubric": "Accuracy of ionic bond description; Accuracy of covalent bond description; Correctness of examples; Clarity of differentiation",
-        "rubric_max_score": 8
-    },
-    {
-        "question_id": "CHEM101_Q3",
-        "question_text": "Balance the following chemical equation: Fe + O2 -> Fe2O3",
-        "student_answer_text": "4Fe + 3O2 -> 2Fe2O3. I made sure there are 4 Fe on both sides and 6 O on both sides.",
-        "lecturer_answer_text": "The balanced equation is 4Fe + 3O2 -> 2Fe2O3. This ensures that the number of iron atoms (4 on each side) and oxygen atoms (6 on each side) is conserved.",
-        "rubric": "Correctness of balanced equation; Verification of atom balance",
-        "rubric_max_score": 5
-    }
-]
-
-# 4. overall_assignment_title (Optional)
-demo_overall_assignment_title = "Chemistry 101 Midterm Examination - Spring 2024"
-
-# 5. lecturer_overall_notes (Optional)
-demo_lecturer_overall_notes = "Please assess overall understanding of fundamental concepts. For Q3, the balancing process is as important as the final answer. Check if students understand the 'why' behind their definitions in Q1 and Q2, not just rote memorization. Encourage detailed explanations that show understanding of the rubric components for each question."
+import json  # Only needed for example JSON string formatting in the prompt
+import datetime
 
 
 def construct_overall_assignment_analysis_prompt_v3(
-    quiz_id: str,
-    student_id: str,
-    model_name:str,
-    questions_and_answers: list[dict], # Each dict includes per-question rubric, lecturer_answer, etc.
+    quiz_id: int,
+    student_id: int,
+    model_name: str,
+    questions_and_answers: list[
+        dict
+    ],  # Each dict includes per-question rubric, lecturer_answer, etc.
     overall_assignment_title: str | None = None,
-    lecturer_overall_notes: str | None = None
-    
+    lecturer_overall_notes: str | None = None,
 ) -> str:
     """
     Constructs a detailed prompt for AI analysis of an entire assignment (all questions),
@@ -75,73 +36,88 @@ def construct_overall_assignment_analysis_prompt_v3(
     questions_answers_formatted_for_prompt = ""
     total_possible_score_from_questions = 0
     for i, qa_pair in enumerate(questions_and_answers):
-        q_id = qa_pair.get('question_id', f"q_{i+1}")
-        q_text = qa_pair.get('question_text', '*N/A*')
-        s_ans = qa_pair.get('student_answer_text', '*No Answer Provided*')
-        lecturer_ans = qa_pair.get('lecturer_answer_text', '*No Lecturer Answer Provided*')
-        rubric = qa_pair.get('rubric', '*No Rubric Provided*') # This is the descriptive rubric for the question
-        rubric_max_score = qa_pair.get('rubric_max_score', 0)
+        q_id = qa_pair.get("question_id", f"q_{i+1}")
+        q_text = qa_pair.get("question_text", "*N/A*")
+        s_ans = qa_pair.get("student_answer_text", "*No Answer Provided*")
+        lecturer_ans = qa_pair.get(
+            "lecturer_answer_text", "*No Lecturer Answer Provided*"
+        )
+        rubric = qa_pair.get(
+            "rubric", "*No Rubric Provided*"
+        )  # This is the descriptive rubric for the question
+        rubric_max_score = qa_pair.get("rubric_max_score", 0)
         total_possible_score_from_questions += rubric_max_score
 
         questions_answers_formatted_for_prompt += f"  Question {i+1} (ID: {q_id}):\n"
-        questions_answers_formatted_for_prompt += f"    Question Text:\n    ```\n    {q_text}\n    ```\n"
-        questions_answers_formatted_for_prompt += f"    Student's Answer:\n    ```\n    {s_ans}\n    ```\n"
+        questions_answers_formatted_for_prompt += (
+            f"    Question Text:\n    ```\n    {q_text}\n    ```\n"
+        )
+        questions_answers_formatted_for_prompt += (
+            f"    Student's Answer:\n    ```\n    {s_ans}\n    ```\n"
+        )
         questions_answers_formatted_for_prompt += f"    Lecturer's Model Answer/Guidance:\n    ```\n    {lecturer_ans}\n    ```\n"
         questions_answers_formatted_for_prompt += f"    Rubric for this Question (Max Score: {rubric_max_score}):\n    ```\n    {rubric}\n    ```\n\n"
 
-    lecturer_notes_formatted = lecturer_overall_notes if lecturer_overall_notes else "*N/A*"
-    assignment_title_formatted = overall_assignment_title if overall_assignment_title else "*N/A*"
+    lecturer_notes_formatted = (
+        lecturer_overall_notes if lecturer_overall_notes else "*N/A*"
+    )
+    assignment_title_formatted = (
+        overall_assignment_title if overall_assignment_title else "*N/A*"
+    )
+
+    current_utc_timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
     # Updated JSON structure example
     output_json_structure_example = {
-      "assessment_id": f"assessment_{quiz_id}_{student_id}",
-      "student_id": student_id,
-      "assignment_identifier": quiz_id,
-      "question_identifier": "quiz_assessment",
-      "submission_timestamp_utc": "YYYY-MM-DDTHH:MM:SSZ",
-      "assessment_timestamp_utc": "YYYY-MM-DDTHH:MM:SSZ",
-      "overall_assessment": {
-        "score": 0, # integer, sum of scores from question_assessments
-        "max_score_possible": total_possible_score_from_questions, # sum of rubric_max_score from all questions
-        "summary_of_performance": "...",
-        "general_positive_feedback": "...",
-        "general_areas_for_improvement": "...",
-      },
-      "question_assessments": [ # Array for individual question assessments
-        {
-            "question_id": "QUESTION_ID_PLACEHOLDER",
-            "question_text": "...", # Populated from input
-            "student_answer_text": "...", # Populated from input
-            "lecturer_answer_text": "...", # Populated from input
-            "rubric": "...", # Populated from input
-            "rubric_max_score": 0, # Populated from input
-            "assessment": {
-                "score": 0, # integer, awarded by AI based on rubric
-                "max_score_possible": 0, # Same as rubric_max_score for this question
-                "rubric_component_feedback": [ # NEW: Detailed feedback per rubric component
+        "user_id": student_id,
+        "quiz_id": quiz_id,
+        "submission_timestamp_utc": current_utc_timestamp,
+        "assessment_timestamp_utc": current_utc_timestamp,
+        "overall_assessment": {
+            "score": 0,  # integer, sum of scores from question_assessments
+            "max_score_possible": total_possible_score_from_questions,  # sum of rubric_max_score from all questions
+            "summary_of_performance": "...",
+            "general_positive_feedback": "...",
+            "general_areas_for_improvement": "...",
+        },
+        "question_assessments": [  # Array for individual question assessments
+            {
+                "question_id": "QUESTION_ID_PLACEHOLDER",
+                "question_text": "...",  # Populated from input
+                "student_answer_text": "...",  # Populated from input
+                "lecturer_answer_text": "...",  # Populated from input
+                "rubric": "...",  # Populated from input
+                "rubric_max_score": 0,  # Populated from input
+                "score": 0,  # integer, awarded by AI based on rubric
+                "max_score_possible": 0,  # Same as rubric_max_score for this question
+                "overall_question_feedback": "General feedback for this specific question, summarizing component performance.",
+                "rubric_component_feedback": [  # Detailed feedback per rubric component
                     {
                         "component_description": "e.g., Accuracy of definition",
                         "component_evaluation": "Student's definition was mostly accurate but missed...",
-                        "component_strengths": "...",
-                        "component_areas_for_improvement": "..."
+                        "component_strengths": "Clear explanation of key concepts...",
+                        "component_areas_for_improvement": "Include more specific examples and definitions...",
                     }
-                    # ... more components if the rubric implies them
                 ],
-                "overall_question_feedback": "General feedback for this specific question, summarizing component performance.",
-                "key_points_covered_by_student": ["...", "..."], # Overall for the question
-                "missing_concepts_in_student_answer": ["...", "..."] # Overall for the question
+                "key_points_covered_by_student": [
+                    "Point 1 that student addressed well",
+                    "Point 2 mentioned correctly",
+                ],  # Overall for the question
+                "missing_concepts_in_student_answer": [
+                    "Concept A not addressed",
+                    "Important detail B omitted",
+                ],  # Overall for the question
             }
-        }
-        # ... more question_assessment objects
-      ],
-      "ai_confidence_scores": {
-        "overall_scoring_confidence": 0.0,
-        "feedback_generation_confidence": 0.0
-      },
-      "processing_metadata": {
-        "model_used": model_name,
-        "prompt_version": "evalyn_overall_prompt_v3.0_deepseek"
-      }
+            # ... more question_assessment objects
+        ],
+        "ai_confidence_scores": {
+            "overall_scoring_confidence": 0.95,  # Default high confidence
+            "feedback_generation_confidence": 0.95,  # Default high confidence
+        },
+        "processing_metadata": {
+            "model_used": model_name,
+            "prompt_version": "evalyn_overall_prompt_v3.0_deepseek",
+        },
     }
     json_example_str = json.dumps(output_json_structure_example, indent=2)
 
@@ -205,8 +181,8 @@ Based on all the information above, perform the following analysis and return th
 
 5.  **JSON Identifiers and Timestamps:**
     * Fill in `student_id` and `assignment_identifier` (use quiz_id value).
-    * Generate an `assessment_id` combining quiz_id and student_id.
     * Set `question_identifier` to "quiz_assessment" for quiz assessments.
+    * Generate a unique `assessment_id` combining quiz_id, student_id and timestamp.
     * Generate current UTC timestamps for `assessment_timestamp_utc`. Use a placeholder or the provided `submission_timestamp_utc` if relevant for the whole assignment.
 
 **Required JSON Output Format:**
@@ -227,6 +203,7 @@ Return your complete analysis for the **ENTIRE ASSIGNMENT** as a single, valid J
 
 Return the JSON analysis now:"""
     return prompt.strip()
+
 
 # # --- Example usage of the function with the demo data ---
 # if __name__ == "__main__":
