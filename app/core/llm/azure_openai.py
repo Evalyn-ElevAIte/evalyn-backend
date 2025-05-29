@@ -49,7 +49,7 @@ def call_azure_openai_api(prompt_text):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt_text}
         ],
-        "max_tokens": 800,
+        "max_tokens": 4096,
         "temperature": 1.0,
         "top_p": 1.0,
         "frequency_penalty": 0.0,

@@ -89,7 +89,7 @@ class QuestionResponse(Model):
 class Assessment(Model):
     """Main assessment model"""
 
-    assessment_id = fields.IntField(pk=True)
+    id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="assessments")
     quiz = fields.ForeignKeyField("models.Quiz", related_name="assessments")
     submission_timestamp_utc = fields.DatetimeField(index=True)
@@ -117,7 +117,8 @@ class Assessment(Model):
         table = "assessments"
 
     def __str__(self):
-        return f"Assessment {self.assessment_id} - Student {self.user}"
+        return f"Assessment {self.id} - Student {self.user}"
+
 
 class QuestionAssessment(Model):
     """Question assessment model"""
@@ -148,12 +149,12 @@ class QuestionAssessment(Model):
     class Meta:
         table = "question_assessments"
         indexes = [
-            ["assessment_id", "question_id"],
+            ["assessment", "question_id"], # Use the foreign key object directly
         ]
 
     def __str__(self):
         return (
-            f"Question {self.question_id} - Assessment {self.assessment.assessment_id}"
+            f"Question {self.question_id} - Assessment {self.assessment.id}"
         )
 
 
@@ -213,4 +214,3 @@ class MissingConcept(Model):
 
     def __str__(self):
         return f"Missing Concept: {self.missing_concept[:50]}..."
-

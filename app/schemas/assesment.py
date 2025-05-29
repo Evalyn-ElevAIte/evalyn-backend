@@ -13,7 +13,7 @@ class RubricComponentCreate(BaseModel):
 
 
 class QuestionAssessmentCreate(BaseModel):
-    question_id: str
+    question_id: int
     question_text: str
     student_answer_text: Optional[str] = None
     lecturer_answer_text: Optional[str] = None
@@ -46,10 +46,8 @@ class ProcessingMetadata(BaseModel):
 
 
 class AssessmentCreate(BaseModel):
-    assessment_id: str
-    student_id: str
-    assignment_identifier: str
-    question_identifier: Optional[str] = None
+    user_id: int
+    quiz_id: int
     submission_timestamp_utc: datetime
     assessment_timestamp_utc: datetime
     overall_assessment: OverallAssessmentCreate
@@ -69,7 +67,6 @@ class RubricComponentResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 class StudentKeyPointResponse(BaseModel):
     id: int
@@ -109,19 +106,9 @@ class QuestionAssessmentResponse(BaseModel):
         from_attributes = True
 
 
-class SuggestedResourceResponse(BaseModel):
-    id: int
-    resource_description: str
-    sequence_order: int
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 class AssessmentResponse(BaseModel):
-    id: int
-    student_id: int
+    id: int # The actual primary key from the database
+    user_id: int
     quiz_id: int
     submission_timestamp_utc: datetime
     assessment_timestamp_utc: datetime
@@ -137,17 +124,15 @@ class AssessmentResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     question_assessments: List[QuestionAssessmentResponse] = []
-    suggested_resources: List[SuggestedResourceResponse] = []
-
     class Config:
         from_attributes = True
 
 
 # Summary schemas for analytics
 class AssessmentSummary(BaseModel):
-    assessment_id: str
-    student_id: str
-    assignment_identifier: str
+    id: int # The actual primary key from the database
+    user_id: int
+    quiz_id: int
     overall_score: int
     overall_max_score: int
     score_percentage: float
@@ -158,7 +143,7 @@ class AssessmentSummary(BaseModel):
 
 
 class StudentPerformanceSummary(BaseModel):
-    student_id: str
+    user_id: int
     total_assessments: int
     average_score: float
     average_max_score: float
@@ -168,8 +153,8 @@ class StudentPerformanceSummary(BaseModel):
 
 # Filter schemas for queries
 class AssessmentFilter(BaseModel):
-    student_id: Optional[str] = None
-    assignment_identifier: Optional[str] = None
+    user_id: Optional[int] = None
+    quiz_id: Optional[int] = None
     min_score: Optional[int] = None
     max_score: Optional[int] = None
     from_date: Optional[datetime] = None
@@ -179,7 +164,7 @@ class AssessmentFilter(BaseModel):
 
 
 class StudentFilter(BaseModel):
-    student_ids: Optional[List[str]] = None
-    assignment_identifier: Optional[str] = None
+    user_ids: Optional[List[int]] = None
+    quiz_id: Optional[int] = None
     from_date: Optional[datetime] = None
     to_date: Optional[datetime] = None
