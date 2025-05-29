@@ -42,6 +42,7 @@ async def get_assessments(
 ):
     """
     Get filtered assessments with pagination
+    this is use for FILTER (PENCARIAN WAK)
     """
     filter_params = AssessmentFilter(
         user_id=user_id,
@@ -70,6 +71,8 @@ async def get_quiz_assessments(
 ) -> Dict[str, Any]:
     """
     Get all assessments for a specific quiz with filtering options
+    
+    Ini buat dapetin penilaian 1 kuis yang mencakup pengerjaan seluruh siswa
 
     Args:
         quiz_id: Quiz ID to get assessments for

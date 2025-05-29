@@ -38,6 +38,7 @@ class Quiz(Model):
     start_time = fields.DatetimeField(null=True)
     end_time = fields.DatetimeField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
+    duration = fields.IntField(null=True)
 
     questions: fields.ReverseRelation["Question"]
     participants: fields.ReverseRelation["QuizParticipant"]

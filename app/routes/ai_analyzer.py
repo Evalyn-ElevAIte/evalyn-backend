@@ -17,7 +17,7 @@ from app.services.assesment_service import AssessmentService
 
 router = APIRouter()
 
-@router.post("/analyze-quiz")
+@router.post("/analyze-quiz/{quiz_id}")
 async def analyze_quiz(
     quiz_id: int,
     model_name: str = "azure",
