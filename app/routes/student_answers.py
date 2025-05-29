@@ -51,6 +51,7 @@ async def get_quiz_with_questions(
         description=quiz.description,
         join_code=quiz.join_code,
         created_at=quiz.created_at,
+        duration=quiz.duration,
         questions=[
             QuestionReadForStudent(
                 id=q.id,

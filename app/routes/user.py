@@ -66,6 +66,7 @@ async def get_user_quizzes(current_user: User = Depends(get_current_user)):
     
     result = [
         QuizWithStatus(
+            id = p.quiz.id,
             title=p.quiz.title,
             description=p.quiz.description,
             created_at=p.quiz.created_at,
