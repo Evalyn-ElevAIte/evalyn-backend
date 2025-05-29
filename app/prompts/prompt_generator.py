@@ -43,7 +43,7 @@ demo_lecturer_overall_notes = "Please assess overall understanding of fundamenta
 
 
 def construct_overall_assignment_analysis_prompt_v3(
-    assignment_id: str,
+    quiz_id: str,
     student_id: str,
     model_name:str,
     questions_and_answers: list[dict], # Each dict includes per-question rubric, lecturer_answer, etc.
@@ -58,7 +58,7 @@ def construct_overall_assignment_analysis_prompt_v3(
     Modified for DeepSeek to prevent <think> tags and ensure clean JSON output.
 
     Args:
-        assignment_id (str): The overall assignment ID.
+        quiz_id (str): The overall assignment ID.
         student_id (str): The student's ID.
         questions_and_answers (list[dict]): A list of dictionaries, where each dictionary
                                              contains 'question_id', 'question_text',
@@ -94,10 +94,10 @@ def construct_overall_assignment_analysis_prompt_v3(
 
     # Updated JSON structure example
     output_json_structure_example = {
-      "assessment_id": "unique_assessment_run_id",
-      "student_identifier": student_id,
-      "assignment_identifier": assignment_id,
-      "question_identifier": "overall_assignment",
+      "assessment_id": f"assessment_{quiz_id}_{student_id}",
+      "student_id": student_id,
+      "assignment_identifier": quiz_id,
+      "question_identifier": "quiz_assessment",
       "submission_timestamp_utc": "YYYY-MM-DDTHH:MM:SSZ",
       "assessment_timestamp_utc": "YYYY-MM-DDTHH:MM:SSZ",
       "overall_assessment": {
@@ -156,8 +156,8 @@ def construct_overall_assignment_analysis_prompt_v3(
 
 **Assignment Context:**
 
-1.  **Overall Assignment ID:**
-    `{assignment_id}`
+1.  **Quiz ID:**
+    `{quiz_id}`
 
 2.  **Student ID:**
     `{student_id}`
@@ -204,8 +204,9 @@ Based on all the information above, perform the following analysis and return th
     * Populate the `overall_assessment` object in the JSON with this information.
 
 5.  **JSON Identifiers and Timestamps:**
-    * Fill in `student_id` and `quiz_id`.
-    * Use "overall_assignment" for `question_id` in the root of the JSON.
+    * Fill in `student_id` and `assignment_identifier` (use quiz_id value).
+    * Generate an `assessment_id` combining quiz_id and student_id.
+    * Set `question_identifier` to "quiz_assessment" for quiz assessments.
     * Generate current UTC timestamps for `assessment_timestamp_utc`. Use a placeholder or the provided `submission_timestamp_utc` if relevant for the whole assignment.
 
 **Required JSON Output Format:**

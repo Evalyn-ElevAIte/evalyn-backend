@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 class QuestionResponseBase(BaseModel):
     question_id: int = Field(..., description="ID of the question being answered")
-    answer: List[str] = Field(..., description="Student's answer as a List")
+    answer: Dict[str, Any] = Field(..., description="Student's answer as JSONB data")
 
 class QuestionResponseToAI(QuestionResponseBase):
     question_text: str = Field(..., description="Text of the question being answered")

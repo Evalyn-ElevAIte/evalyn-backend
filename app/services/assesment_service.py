@@ -13,7 +13,6 @@ from app.models.models import (
     RubricComponentFeedback,
     StudentKeyPoint,
     MissingConcept,
-    SuggestedResource,
 )
 from app.schemas.assesment import (
     AssessmentCreate,
@@ -65,7 +64,7 @@ class AssessmentService:
                 # Create main assessment
                 assessment = await Assessment.create(
                     assessment_id=assessment_data.assessment_id,
-                    student_identifier=assessment_data.student_identifier,
+                    student_identifier=assessment_data.student_id,
                     assignment_identifier=assessment_data.assignment_identifier,
                     question_identifier=assessment_data.question_identifier,
                     submission_timestamp_utc=assessment_data.submission_timestamp_utc,
@@ -141,16 +140,7 @@ class AssessmentService:
                             using_db=conn,
                         )
 
-                # Create suggested resources
-                for idx, resource in enumerate(
-                    assessment_data.overall_assessment.suggested_next_steps_or_resources
-                ):
-                    await SuggestedResource.create(
-                        assessment=assessment,
-                        resource_description=resource,
-                        sequence_order=idx,
-                        using_db=conn,
-                    )
+                
 
                 # Return the created assessment with all relations
                 return await AssessmentService.get_assessment_by_id(
@@ -300,7 +290,7 @@ class AssessmentService:
             # Apply filters
             if student_filter.student_identifiers:
                 query = query.filter(
-                    student_identifier__in=student_filter.student_identifiers
+                    student_identifier__in=student_filter.student_ids
                 )
 
             if student_filter.assignment_identifier:

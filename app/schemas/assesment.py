@@ -3,12 +3,14 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
 
+
 # Input schemas for creating records
 class RubricComponentCreate(BaseModel):
     component_description: str
     component_evaluation: Optional[str] = None
     component_strengths: Optional[str] = None
     component_areas_for_improvement: Optional[str] = None
+
 
 class QuestionAssessmentCreate(BaseModel):
     question_id: str
@@ -24,25 +26,28 @@ class QuestionAssessmentCreate(BaseModel):
     key_points_covered_by_student: List[str] = []
     missing_concepts_in_student_answer: List[str] = []
 
+
 class OverallAssessmentCreate(BaseModel):
     score: int = 0
     max_score_possible: int = 0
     summary_of_performance: Optional[str] = None
     general_positive_feedback: Optional[str] = None
     general_areas_for_improvement: Optional[str] = None
-    suggested_next_steps_or_resources: List[str] = []
+
 
 class AIConfidenceScores(BaseModel):
     overall_scoring_confidence: Optional[Decimal] = None
     feedback_generation_confidence: Optional[Decimal] = None
 
+
 class ProcessingMetadata(BaseModel):
     model_used: Optional[str] = None
     prompt_version: Optional[str] = None
 
+
 class AssessmentCreate(BaseModel):
     assessment_id: str
-    student_identifier: str
+    student_id: str
     assignment_identifier: str
     question_identifier: Optional[str] = None
     submission_timestamp_utc: datetime
@@ -51,6 +56,7 @@ class AssessmentCreate(BaseModel):
     question_assessments: List[QuestionAssessmentCreate] = []
     ai_confidence_scores: Optional[AIConfidenceScores] = None
     processing_metadata: Optional[ProcessingMetadata] = None
+
 
 # Output schemas for reading records
 class RubricComponentResponse(BaseModel):
@@ -64,6 +70,7 @@ class RubricComponentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class StudentKeyPointResponse(BaseModel):
     id: int
     key_point: str
@@ -72,6 +79,7 @@ class StudentKeyPointResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class MissingConceptResponse(BaseModel):
     id: int
     missing_concept: str
@@ -79,6 +87,7 @@ class MissingConceptResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class QuestionAssessmentResponse(BaseModel):
     id: int
@@ -99,6 +108,7 @@ class QuestionAssessmentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class SuggestedResourceResponse(BaseModel):
     id: int
     resource_description: str
@@ -108,12 +118,11 @@ class SuggestedResourceResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 class AssessmentResponse(BaseModel):
     id: int
-    assessment_id: str
-    student_identifier: str
-    assignment_identifier: str
-    question_identifier: Optional[str]
+    student_id: int
+    quiz_id: int
     submission_timestamp_utc: datetime
     assessment_timestamp_utc: datetime
     overall_score: int
@@ -133,10 +142,11 @@ class AssessmentResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 # Summary schemas for analytics
 class AssessmentSummary(BaseModel):
     assessment_id: str
-    student_identifier: str
+    student_id: str
     assignment_identifier: str
     overall_score: int
     overall_max_score: int
@@ -146,17 +156,19 @@ class AssessmentSummary(BaseModel):
     class Config:
         from_attributes = True
 
+
 class StudentPerformanceSummary(BaseModel):
-    student_identifier: str
+    student_id: str
     total_assessments: int
     average_score: float
     average_max_score: float
     average_percentage: float
     latest_assessment_date: datetime
 
+
 # Filter schemas for queries
 class AssessmentFilter(BaseModel):
-    student_identifier: Optional[str] = None
+    student_id: Optional[str] = None
     assignment_identifier: Optional[str] = None
     min_score: Optional[int] = None
     max_score: Optional[int] = None
@@ -165,8 +177,9 @@ class AssessmentFilter(BaseModel):
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
 
+
 class StudentFilter(BaseModel):
-    student_identifiers: Optional[List[str]] = None
+    student_ids: Optional[List[str]] = None
     assignment_identifier: Optional[str] = None
     from_date: Optional[datetime] = None
     to_date: Optional[datetime] = None

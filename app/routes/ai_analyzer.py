@@ -93,7 +93,7 @@ async def analyze_quiz(
         
         # Generate analysis prompt
         prompt = construct_overall_assignment_analysis_prompt_v3(
-            assignment_id=str(quiz.id),
+            quiz_id=str(quiz.id),
             student_id=str(current_user.id),
             model_name=model_name,
             questions_and_answers=questions_and_answers,
