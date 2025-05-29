@@ -85,7 +85,7 @@ async def submit_all_answers(
         )
     
     # Update participant status to submitted
-    participant.status = "submitted"
+    participant.status = "submited"
     await participant.save()
 
     # Get all questions for the specified quiz

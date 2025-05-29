@@ -16,6 +16,7 @@ from app.models.models import (
     MissingConcept,
     User,  # Import User model
     Quiz,  # Import Quiz model
+    QuizParticipant
 )
 from app.schemas.assesment import (
     AssessmentCreate,
