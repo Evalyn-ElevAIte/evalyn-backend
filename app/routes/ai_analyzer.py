@@ -114,6 +114,10 @@ async def analyze_quiz(
                 detail="Failed to create assessment from analysis"
             )
             
+        # Update participant status to graded
+        participant.status = "graded"
+        await participant.save()
+            
         return {
             "success": True,
             "analysis": analysis_result,
