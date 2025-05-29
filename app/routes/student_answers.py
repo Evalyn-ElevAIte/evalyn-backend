@@ -83,6 +83,10 @@ async def submit_all_answers(
             status_code=403,
             detail="You are not a participant in this quiz"
         )
+    
+    # Update participant status to submitted
+    participant.status = "submitted"
+    await participant.save()
 
     # Get all questions for the specified quiz
     quiz_questions = await Question.filter(quiz_id=bulk_response_data.quiz_id)

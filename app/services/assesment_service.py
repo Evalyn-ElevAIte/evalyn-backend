@@ -14,8 +14,8 @@ from app.models.models import (
     RubricComponentFeedback,
     StudentKeyPoint,
     MissingConcept,
-    User, # Import User model
-    Quiz, # Import Quiz model
+    User,  # Import User model
+    Quiz,  # Import Quiz model
 )
 from app.schemas.assesment import (
     AssessmentCreate,
@@ -67,16 +67,20 @@ class AssessmentService:
                 # Fetch User and Quiz objects
                 user_obj = await User.get_or_none(id=assessment_data.user_id)
                 if not user_obj:
-                    raise DoesNotExist(f"User with ID {assessment_data.user_id} not found")
+                    raise DoesNotExist(
+                        f"User with ID {assessment_data.user_id} not found"
+                    )
 
                 quiz_obj = await Quiz.get_or_none(id=assessment_data.quiz_id)
                 if not quiz_obj:
-                    raise DoesNotExist(f"Quiz with ID {assessment_data.quiz_id} not found")
+                    raise DoesNotExist(
+                        f"Quiz with ID {assessment_data.quiz_id} not found"
+                    )
 
                 # Create main assessment
                 assessment = await Assessment.create(
-                    user=user_obj, # Use the fetched User object
-                    quiz=quiz_obj, # Use the fetched Quiz object
+                    user=user_obj,  # Use the fetched User object
+                    quiz=quiz_obj,  # Use the fetched Quiz object
                     submission_timestamp_utc=assessment_data.submission_timestamp_utc,
                     assessment_timestamp_utc=assessment_data.assessment_timestamp_utc,
                     overall_score=assessment_data.overall_assessment.score,
@@ -169,9 +173,7 @@ class AssessmentService:
         Get complete assessment by ID with all related data
         """
         try:
-            assessment = await Assessment.get(
-                id=id
-            ).prefetch_related(
+            assessment = await Assessment.get(id=id).prefetch_related(
                 "question_assessments__rubric_components",
                 "question_assessments__key_points",
                 "question_assessments__missing_concepts",
@@ -198,14 +200,10 @@ class AssessmentService:
 
             # Apply filters
             if filter_params.user_id:
-                query = query.filter(
-                    user_id=filter_params.user_id
-                )
+                query = query.filter(user_id=filter_params.user_id)
 
             if filter_params.quiz_id:
-                query = query.filter(
-                    quiz_id=filter_params.quiz_id
-                )
+                query = query.filter(quiz_id=filter_params.quiz_id)
 
             if filter_params.min_score is not None:
                 query = query.filter(overall_score__gte=filter_params.min_score)
@@ -299,9 +297,7 @@ class AssessmentService:
                 query = query.filter(user_id__in=student_filter.user_ids)
 
             if student_filter.quiz_id:
-                query = query.filter(
-                    quiz_id=student_filter.quiz_id
-                )
+                query = query.filter(quiz_id=student_filter.quiz_id)
 
             if student_filter.from_date:
                 query = query.filter(
@@ -448,4 +444,280 @@ class AssessmentService:
 
         except Exception as e:
             logger.error(f"Error getting assessment statistics: {e}")
+            return {}
+
+    @staticmethod
+    async def get_quiz_assessments_with_filters(
+        quiz_id: int,
+        student_name: Optional[str] = None,
+        min_score: Optional[float] = None,
+        max_score: Optional[float] = None,
+        offset: int = 0,
+        limit: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Get all assessments for a specific quiz with filtering options
+        Returns assessments with student information and quiz details
+        """
+        try:
+            # Get quiz information first
+            quiz = await Quiz.get_or_none(id=quiz_id).select_related("creator")
+            if not quiz:
+                return {"quiz": None, "assessments": [], "error": "Quiz not found"}
+
+            query = Assessment.filter(quiz_id=quiz_id).select_related("user")
+
+            # Filter by student name if provided
+            if student_name:
+                # Assuming User model has 'name' or 'username' field
+                # Adjust field name based on your User model structure
+                query = query.filter(user__name__icontains=student_name)
+
+            # Filter by score range
+            if min_score is not None:
+                query = query.filter(overall_score__gte=min_score)
+
+            if max_score is not None:
+                query = query.filter(overall_score__lte=max_score)
+
+            # Apply pagination and order by assessment date
+            assessments = (
+                await query.order_by("-assessment_timestamp_utc")
+                .offset(offset)
+                .limit(limit)
+            )
+
+            # Format response with student information
+            assessment_results = []
+            for assessment in assessments:
+                # Get participant status for this user and quiz
+                participant = await QuizParticipant.get_or_none(
+                    user_id=assessment.user_id,
+                    quiz_id=quiz_id
+                )
+                
+                assessment_results.append(
+                    {
+                        "id": assessment.id,
+                        "user_id": assessment.user_id,
+                        "student_name": (
+                            assessment.user.name
+                            if hasattr(assessment.user, "name")
+                            else assessment.user.username
+                        ),
+                        "student_email": getattr(assessment.user, "email", None),
+                        "overall_score": assessment.overall_score,
+                        "overall_max_score": assessment.overall_max_score,
+                        "score_percentage": round(
+                            (
+                                (
+                                    assessment.overall_score
+                                    / assessment.overall_max_score
+                                    * 100
+                                )
+                                if assessment.overall_max_score > 0
+                                else 0
+                            ),
+                            2,
+                        ),
+                        "assessment_timestamp_utc": assessment.assessment_timestamp_utc,
+                        "submission_timestamp_utc": assessment.submission_timestamp_utc,
+                        "summary_of_performance": assessment.summary_of_performance,
+                        "general_positive_feedback": assessment.general_positive_feedback,
+                        "general_areas_for_improvement": assessment.general_areas_for_improvement,
+                        "participant_status": participant.status if participant else None,
+                    }
+                )
+
+            # Prepare quiz information
+            quiz_info = {
+                "id": quiz.id,
+                "title": quiz.title,
+                "description": quiz.description,
+                "creator_name": (
+                    quiz.creator.name
+                    if hasattr(quiz.creator, "name")
+                    else quiz.creator.username
+                ),
+                "join_code": quiz.join_code,
+                "completed": quiz.completed,
+                "start_time": quiz.start_time,
+                "end_time": quiz.end_time,
+                "created_at": quiz.created_at,
+            }
+
+            return {"quiz": quiz_info, "assessments": assessment_results}
+
+        except Exception as e:
+            logger.error(f"Error getting quiz assessments: {e}")
+            return {"quiz": None, "assessments": [], "error": str(e)}
+
+    @staticmethod
+    async def get_quiz_statistics(quiz_id: int) -> Dict[str, Any]:
+        """
+        Get comprehensive statistics for a specific quiz
+        """
+        try:
+            from tortoise.functions import Count, Avg, Min, Max, Sum
+
+            # Get basic statistics
+            stats = (
+                await Assessment.filter(quiz_id=quiz_id)
+                .annotate(
+                    total_assessments=Count("id"),
+                    average_score=Avg("overall_score"),
+                    min_score=Min("overall_score"),
+                    max_score=Max("overall_score"),
+                    average_max_score=Avg("overall_max_score"),
+                    earliest_assessment=Min("assessment_timestamp_utc"),
+                    latest_assessment=Max("assessment_timestamp_utc"),
+                )
+                .values(
+                    "total_assessments",
+                    "average_score",
+                    "min_score",
+                    "max_score",
+                    "average_max_score",
+                    "earliest_assessment",
+                    "latest_assessment",
+                )
+            )
+
+            # Get score distribution (grade ranges)
+            assessments = await Assessment.filter(quiz_id=quiz_id).values(
+                "overall_score", "overall_max_score"
+            )
+
+            grade_distribution = {
+                "A (90-100%)": 0,
+                "B (80-89%)": 0,
+                "C (70-79%)": 0,
+                "D (60-69%)": 0,
+                "F (0-59%)": 0,
+            }
+
+            for assessment in assessments:
+                if assessment["overall_max_score"] > 0:
+                    percentage = (
+                        assessment["overall_score"] / assessment["overall_max_score"]
+                    ) * 100
+                    if percentage >= 90:
+                        grade_distribution["A (90-100%)"] += 1
+                    elif percentage >= 80:
+                        grade_distribution["B (80-89%)"] += 1
+                    elif percentage >= 70:
+                        grade_distribution["C (70-79%)"] += 1
+                    elif percentage >= 60:
+                        grade_distribution["D (60-69%)"] += 1
+                    else:
+                        grade_distribution["F (0-59%)"] += 1
+
+            # Get top and bottom performers
+            top_performers = (
+                await Assessment.filter(quiz_id=quiz_id)
+                .select_related("user")
+                .order_by("-overall_score")
+                .limit(5)
+            )
+            bottom_performers = (
+                await Assessment.filter(quiz_id=quiz_id)
+                .select_related("user")
+                .order_by("overall_score")
+                .limit(5)
+            )
+
+            if stats:
+                result = {
+                    "quiz_id": quiz_id,
+                    "total_assessments": stats[0]["total_assessments"],
+                    "average_score": (
+                        round(stats[0]["average_score"], 2)
+                        if stats[0]["average_score"]
+                        else 0
+                    ),
+                    "average_percentage": (
+                        round(
+                            (
+                                stats[0]["average_score"]
+                                / stats[0]["average_max_score"]
+                                * 100
+                            ),
+                            2,
+                        )
+                        if stats[0]["average_score"] and stats[0]["average_max_score"]
+                        else 0
+                    ),
+                    "min_score": stats[0]["min_score"] or 0,
+                    "max_score": stats[0]["max_score"] or 0,
+                    "earliest_assessment": stats[0]["earliest_assessment"],
+                    "latest_assessment": stats[0]["latest_assessment"],
+                    "grade_distribution": grade_distribution,
+                    "top_performers": [
+                        {
+                            "student_name": (
+                                performer.user.name
+                                if hasattr(performer.user, "name")
+                                else performer.user.username
+                            ),
+                            "score": performer.overall_score,
+                            "max_score": performer.overall_max_score,
+                            "percentage": (
+                                round(
+                                    (
+                                        performer.overall_score
+                                        / performer.overall_max_score
+                                        * 100
+                                    ),
+                                    2,
+                                )
+                                if performer.overall_max_score > 0
+                                else 0
+                            ),
+                        }
+                        for performer in top_performers
+                    ],
+                    "bottom_performers": [
+                        {
+                            "student_name": (
+                                performer.user.name
+                                if hasattr(performer.user, "name")
+                                else performer.user.username
+                            ),
+                            "score": performer.overall_score,
+                            "max_score": performer.overall_max_score,
+                            "percentage": (
+                                round(
+                                    (
+                                        performer.overall_score
+                                        / performer.overall_max_score
+                                        * 100
+                                    ),
+                                    2,
+                                )
+                                if performer.overall_max_score > 0
+                                else 0
+                            ),
+                        }
+                        for performer in bottom_performers
+                    ],
+                }
+            else:
+                result = {
+                    "quiz_id": quiz_id,
+                    "total_assessments": 0,
+                    "average_score": 0,
+                    "average_percentage": 0,
+                    "min_score": 0,
+                    "max_score": 0,
+                    "earliest_assessment": None,
+                    "latest_assessment": None,
+                    "grade_distribution": grade_distribution,
+                    "top_performers": [],
+                    "bottom_performers": [],
+                }
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Error getting quiz statistics: {e}")
             return {}
