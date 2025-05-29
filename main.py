@@ -8,7 +8,8 @@ from app.routes import (
     quiz_participants,
     student_answers,
     ai_analyzer,
-    assesment
+    assesment,
+    assistant_openai,
 )
 
 app = FastAPI()
@@ -28,7 +29,10 @@ app.include_router(
 )
 app.include_router(ai_analyzer.router, prefix="/api/ai", tags=["AI Analyzer"])
 
-app.include_router(assesment.router, prefix="/api/assesment",tags=["Assesment Result"])
+app.include_router(assesment.router, prefix="/api/assesment", tags=["Assesment Result"])
+app.include_router(
+    assistant_openai.router, prefix="/api/assistant", tags=["Chatbot OpenAI"]
+)
 
 
 # startup
