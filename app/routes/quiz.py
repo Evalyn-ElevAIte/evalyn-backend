@@ -14,7 +14,7 @@ Quiz_Pydantic = pydantic_model_creator(
     Quiz, name="Quiz", exclude=("questions", "participants")
 )
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
 
 # ! get all quizzes
 @router.get("/", response_model=list[Quiz_Pydantic])
@@ -45,7 +45,7 @@ async def create_quiz_with_questions(
                 lecturer_overall_notes=payload.lecturer_overall_notes,
                 start_time=payload.start_time,
                 end_time=payload.end_time,
-                # completed=payload.completed,
+                duration=payload.duration,
                 join_code=code,
             )
             break

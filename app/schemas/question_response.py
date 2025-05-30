@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 class QuestionResponseBase(BaseModel):
     question_id: int = Field(..., description="ID of the question being answered")
-    answer: dict = Field(..., description="Student's answer as a dictionary")
+    answer: Dict[str, Any] = Field(..., description="Student's answer as JSONB data")
 
 class QuestionResponseToAI(QuestionResponseBase):
     question_text: str = Field(..., description="Text of the question being answered")
@@ -26,14 +26,14 @@ class QuestionResponseRead(QuestionResponseBase):
 
 class BulkQuestionResponseCreate(BaseModel):
     quiz_id: int = Field(..., description="ID of the quiz for which answers are being submitted")
-    title: Optional[str] = Field(None, description="Title of the quiz")
-    description: Optional[str] = Field(None, description="Description of the quiz")
+    title: str = Field(..., description="Title of the quiz")
+    description: str = Field(..., description="Description of the quiz")
     responses: List[QuestionResponseCreate] = Field(..., description="List of student responses")
 
 class BulkQuestionResponseToAI(BaseModel):
     quiz_id: int = Field(..., description="ID of the quiz for which answers are being submitted")
-    title: Optional[str] = Field(None, description="Title of the quiz")
-    description: Optional[str] = Field(None, description="Description of the quiz")
+    title: str = Field(None, description="Title of the quiz")
+    description: str = Field(None, description="Description of the quiz")
     lecturer_overall_notes: Optional[str] = Field(None, description="Overall notes from the lecturer")
     student_id: int = Field(...,description = "User ID")
     responses: List[QuestionResponseToAI] = Field(..., description="List of student responses")

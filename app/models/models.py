@@ -38,6 +38,7 @@ class Quiz(Model):
     start_time = fields.DatetimeField(null=True)
     end_time = fields.DatetimeField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
+    duration = fields.IntField(null=True)
 
     questions: fields.ReverseRelation["Question"]
     participants: fields.ReverseRelation["QuizParticipant"]
@@ -84,3 +85,133 @@ class QuestionResponse(Model):
 
     class Meta:
         unique_together = ("user", "question")
+
+
+class Assessment(Model):
+    """Main assessment model"""
+
+    id = fields.IntField(pk=True)
+    user = fields.ForeignKeyField("models.User", related_name="assessments")
+    quiz = fields.ForeignKeyField("models.Quiz", related_name="assessments")
+    submission_timestamp_utc = fields.DatetimeField(index=True)
+    assessment_timestamp_utc = fields.DatetimeField(index=True)
+    overall_score = fields.IntField(default=0)
+    overall_max_score = fields.IntField(default=0)
+    summary_of_performance = fields.TextField(null=True)
+    general_positive_feedback = fields.TextField(null=True)
+    general_areas_for_improvement = fields.TextField(null=True)
+    overall_scoring_confidence = fields.DecimalField(
+        max_digits=3, decimal_places=2, null=True
+    )
+    feedback_generation_confidence = fields.DecimalField(
+        max_digits=3, decimal_places=2, null=True
+    )
+    model_used = fields.CharField(max_length=50, null=True)
+    prompt_version = fields.CharField(max_length=100, null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    # Reverse foreign key relationships
+    question_assessments: fields.ReverseRelation["QuestionAssessment"]
+
+    class Meta:
+        table = "assessments"
+
+    def __str__(self):
+        return f"Assessment {self.id} - Student {self.user}"
+
+
+class QuestionAssessment(Model):
+    """Question assessment model"""
+
+    id = fields.IntField(pk=True)
+    assessment = fields.ForeignKeyField(
+        "models.Assessment",
+        related_name="question_assessments",
+        on_delete=fields.CASCADE,
+    )
+    question_id = fields.CharField(max_length=100)
+    question_text = fields.TextField()
+    student_answer_text = fields.TextField(null=True)
+    lecturer_answer_text = fields.TextField(null=True)
+    rubric = fields.TextField(null=True)
+    rubric_max_score = fields.IntField(default=0)
+    score = fields.IntField(default=0)
+    max_score_possible = fields.IntField(default=0)
+    overall_question_feedback = fields.TextField(null=True)
+    # add AI plagiarism score
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    # Reverse foreign key relationships
+    rubric_components: fields.ReverseRelation["RubricComponentFeedback"]
+    key_points: fields.ReverseRelation["StudentKeyPoint"]
+    missing_concepts: fields.ReverseRelation["MissingConcept"]
+
+    class Meta:
+        table = "question_assessments"
+        indexes = [
+            ["assessment", "question_id"], # Use the foreign key object directly
+        ]
+
+    def __str__(self):
+        return (
+            f"Question {self.question_id} - Assessment {self.assessment.id}"
+        )
+
+
+class RubricComponentFeedback(Model):
+    """Rubric component feedback model"""
+
+    id = fields.IntField(pk=True)
+    question_assessment = fields.ForeignKeyField(
+        "models.QuestionAssessment",
+        related_name="rubric_components",
+        on_delete=fields.CASCADE,
+    )
+    component_description = fields.CharField(max_length=255)
+    component_evaluation = fields.TextField(null=True)
+    component_strengths = fields.TextField(null=True)
+    component_areas_for_improvement = fields.TextField(null=True)
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "rubric_component_feedback"
+
+    def __str__(self):
+        return f"Rubric Component: {self.component_description}"
+
+
+class StudentKeyPoint(Model):
+    """Key points covered by student model"""
+
+    id = fields.IntField(pk=True)
+    question_assessment = fields.ForeignKeyField(
+        "models.QuestionAssessment", related_name="key_points", on_delete=fields.CASCADE
+    )
+    key_point = fields.TextField()
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "student_key_points"
+
+    def __str__(self):
+        return f"Key Point: {self.key_point[:50]}..."
+
+
+class MissingConcept(Model):
+    """Missing concepts in student answer model"""
+
+    id = fields.IntField(pk=True)
+    question_assessment = fields.ForeignKeyField(
+        "models.QuestionAssessment",
+        related_name="missing_concepts",
+        on_delete=fields.CASCADE,
+    )
+    missing_concept = fields.TextField()
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "missing_concepts"
+
+    def __str__(self):
+        return f"Missing Concept: {self.missing_concept[:50]}..."

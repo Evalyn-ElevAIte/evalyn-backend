@@ -35,6 +35,7 @@ class QuizWithStatusAll(BaseModel):
     completed: Optional[bool] = None     # Nullable field
 
 class QuizWithStatus(BaseModel):
+    id: int
     title: str
     description: str
     created_at: datetime
@@ -53,6 +54,7 @@ class QuizReadWithQuestions(BaseModel):
     title: str
     description: str
     join_code: str
+    duration: Optional[int]
     created_at: datetime
     questions: List[QuestionReadForStudent]
 

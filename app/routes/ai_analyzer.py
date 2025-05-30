@@ -13,10 +13,11 @@ from app.schemas.question_response import (
     QuestionResponseToAI,
     BulkQuestionResponseToAI
 )
+from app.services.assesment_service import AssessmentService
 
 router = APIRouter()
 
-@router.post("/analyze-quiz")
+@router.post("/analyze-quiz/{quiz_id}")
 async def analyze_quiz(
     quiz_id: int,
     model_name: str = "azure",
@@ -47,7 +48,7 @@ async def analyze_quiz(
                 detail="Student is not a participant in this quiz"
             )
 
-        # Get all questions and student responses for this quiz
+        # Get all questions and student responses for this quiz from table (temporary)
         responses = await QuestionResponse.filter(
             user_id=current_user.id,
             question__quiz_id=quiz_id
@@ -92,8 +93,8 @@ async def analyze_quiz(
         
         # Generate analysis prompt
         prompt = construct_overall_assignment_analysis_prompt_v3(
-            assignment_id=str(quiz.id),
-            student_id=str(current_user.id),
+            quiz_id=quiz.id, # Pass as int
+            student_id=current_user.id, # Pass as int
             model_name=model_name,
             questions_and_answers=questions_and_answers,
             overall_assignment_title=quiz.title,
@@ -101,20 +102,34 @@ async def analyze_quiz(
         )
         
         # Get LLM instance and analyze
-        # llm = get_llm_api_call_function(model_name)
-        analysis_result =  get_llm_api_call_function(prompt,model_name)
+        analysis_result = get_llm_api_call_function(prompt, model_name)
+
+        print(analysis_result)
         
+        # Create assessment from analysis result
+        assessment = await AssessmentService.create_assessment_from_json(analysis_result)
+        if not assessment:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create assessment from analysis"
+            )
+            
+        # Update participant status to graded
+        participant.status = "graded"
+        await participant.save()
+            
         return {
             "success": True,
             "analysis": analysis_result,
+            "assessment_id": assessment.id, # Return the integer ID
             "model_used": model_name,
             "quiz_id": quiz.id,
             "student_id": current_user.id
         }
         
-    except HTTPException:
-        # Re-raise HTTP exceptions as-is
-        raise
+    except HTTPException as he:
+        # Re-raise HTTP exceptions with their original status code
+        raise he
     except Exception as e:
         raise HTTPException(
             status_code=500,

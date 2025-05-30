@@ -19,6 +19,8 @@ async def join_quiz_by_code(
     # Determine status
     if quiz.creator_id != current_user.id:
         status = StatusType.UNFINISHED
+    else:
+        raise HTTPException(status_code=400, detail="You are the creator")
 
     # Prevent duplicate entry
     if await QuizParticipant.filter(user=current_user.id, quiz=quiz.id).exists():
