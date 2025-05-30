@@ -20,6 +20,7 @@ class QuestionAssessmentCreate(BaseModel):
     rubric: Optional[str] = None
     rubric_max_score: int = 0
     score: int = 0
+    rating_plagiarism = int
     max_score_possible: int = 0
     overall_question_feedback: Optional[str] = None
     rubric_component_feedback: List[RubricComponentCreate] = []

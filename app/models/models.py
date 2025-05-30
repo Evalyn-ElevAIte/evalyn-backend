@@ -140,6 +140,7 @@ class QuestionAssessment(Model):
     max_score_possible = fields.IntField(default=0)
     overall_question_feedback = fields.TextField(null=True)
     # add AI plagiarism score
+    rating_plagiarism = fields.IntField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
     # Reverse foreign key relationships
