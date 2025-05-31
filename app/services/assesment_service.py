@@ -6,7 +6,7 @@ from tortoise.queryset import QuerySet
 from datetime import datetime
 import logging
 from fastapi import HTTPException
-from app.utils.util import check_ai_plagiarism
+from app.utils.util import check_ai_plagiarism, check_ai_with_sapling
 
 # Import models and schemas (assuming they're in separate files)
 from app.models.models import (
@@ -115,7 +115,19 @@ class AssessmentService:
 
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
-                    plagiarism_score = await check_ai_plagiarism(question_data.student_answer_text)
+                    print('==question_data.student_answer_text', question_data.student_answer_text)
+                    
+                    if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:
+                        value = list(question_data.student_answer_text.values())[0]
+                        print('==value', value)
+                        plagiarism_score = await check_ai_with_sapling(value)
+                    else:
+                        # Handle error or fallback
+                        print("Invalid or empty student answer format")
+                        plagiarism_score = None
+                        
+                    print('==final plagiarism value : ', plagiarism_score)
+                        
                     question_assessment = await QuestionAssessment.create(
                         assessment=assessment,
                         question_id=question_data.question_id,
