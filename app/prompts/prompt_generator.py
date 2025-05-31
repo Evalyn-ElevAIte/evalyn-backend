@@ -19,8 +19,8 @@ def construct_overall_assignment_analysis_prompt_v3(
     Modified for DeepSeek to prevent <think> tags and ensure clean JSON output.
 
     Args:
-        quiz_id (str): The overall assignment ID.
-        student_id (str): The student's ID.
+        quiz_id (int): The overall assignment ID.
+        student_id (int): The student's ID.
         questions_and_answers (list[dict]): A list of dictionaries, where each dictionary
                                              contains 'question_id', 'question_text',
                                              'student_answer_text', 'lecturer_answer_text',
@@ -82,7 +82,7 @@ def construct_overall_assignment_analysis_prompt_v3(
         },
         "question_assessments": [  # Array for individual question assessments
             {
-                "question_id": "QUESTION_ID_PLACEHOLDER",
+                "question_id": 0, # integer, placeholder
                 "question_text": "...",  # Populated from input
                 "student_answer_text": "...",  # Populated from input
                 "lecturer_answer_text": "...",  # Populated from input

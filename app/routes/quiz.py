@@ -27,20 +27,25 @@ async def get_quiz_by_id(quiz_id: int, current_user: User = Depends(get_current_
     # Try to find participation
     participation = await QuizParticipant.filter(user=current_user.id, quiz_id=quiz_id).prefetch_related("quiz").first()
     if participation:
+        quiz_obj = participation.quiz
+        question_count = await Question.filter(quiz=quiz_obj).count()
         return {
-            "id": participation.quiz.id,
-            "title": participation.quiz.title,
-            "description": participation.quiz.description,
-            "created_at": participation.quiz.created_at,
-            "end_time": participation.quiz.end_time,
-            "join_code": participation.quiz.join_code,
+            "id": quiz_obj.id,
+            "title": quiz_obj.title,
+            "description": quiz_obj.description,
+            "created_at": quiz_obj.created_at,
+            "end_time": quiz_obj.end_time,
+            "join_code": quiz_obj.join_code,
+            "duration": quiz_obj.duration,
             "status": participation.status,
-            "completed": None
+            "completed": None,
+            "question_count": question_count
         }
 
     # Try to find as creator
     quiz = await Quiz.filter(creator=current_user.id, id=quiz_id).first()
     if quiz:
+        question_count = await Question.filter(quiz=quiz).count()
         return {
             "id": quiz.id,
             "title": quiz.title,
@@ -48,8 +53,10 @@ async def get_quiz_by_id(quiz_id: int, current_user: User = Depends(get_current_
             "created_at": quiz.created_at,
             "end_time": quiz.end_time,
             "join_code": quiz.join_code,
+            "duration": quiz.duration,
             "status": None,
-            "completed": quiz.completed
+            "completed": quiz.completed,
+            "question_count": question_count
         }
 
     raise HTTPException(status_code=404, detail="Quiz not found. You either not enrolled in this quiz or you are not the creator of this quiz")
@@ -110,6 +117,7 @@ async def create_quiz(payload: QuizCreate, current_user: User = Depends(get_curr
                 lecturer_overall_notes=payload.lecturer_overall_notes,
                 start_time=payload.start_time,
                 end_time=payload.end_time,
+                duration=payload.duration,
                 completed=payload.completed,
                 join_code=code
             )
