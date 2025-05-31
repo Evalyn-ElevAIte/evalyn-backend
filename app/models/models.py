@@ -65,7 +65,7 @@ class Question(Model):
 class QuizParticipant(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="participants")
-    quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
+    quiz = fields.ForeignKeyField("models.Quiz", related_name="quiz")
     status = fields.CharEnumField(StatusType)
     score = fields.IntField(default=0)
     joined_at = fields.DatetimeField(auto_now_add=True)
@@ -130,7 +130,7 @@ class QuestionAssessment(Model):
         related_name="question_assessments",
         on_delete=fields.CASCADE,
     )
-    question_id = fields.CharField(max_length=100)
+    question_id = fields.IntField()
     question_text = fields.TextField()
     student_answer_text = fields.TextField(null=True)
     lecturer_answer_text = fields.TextField(null=True)
