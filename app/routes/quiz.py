@@ -1,8 +1,8 @@
 # app/routes/quiz.py
 from fastapi import APIRouter, HTTPException, Depends
 from tortoise.exceptions import IntegrityError
-from app.models.models import Quiz, User, Question
-from app.schemas.quiz import QuizCreate, QuizRead
+from app.models.models import Quiz, User, Question, QuizParticipant
+from app.schemas.quiz import QuizCreate, QuizRead, QuizWithStatusAll
 from app.schemas.question import QuizWithQuestionsCreate
 
 from app.utils.util import make_join_code
@@ -14,20 +14,46 @@ Quiz_Pydantic = pydantic_model_creator(
     Quiz, name="Quiz", exclude=("questions", "participants")
 )
 
-router = APIRouter(dependencies=[Depends(get_current_user)])
+router = APIRouter()
 
 # ! get all quizzes
 @router.get("/", response_model=list[Quiz_Pydantic])
 async def get_quizzes():
     return await Quiz.all()
 
-# ! get a single quiz by its ID
-@router.get("/{quiz_id}", response_model=Quiz_Pydantic)
-async def get_quiz_by_id(quiz_id: int):
-    quiz = await Quiz.get_or_none(id=quiz_id)
-    if not quiz:
-        raise HTTPException(status_code=404, detail="Quiz not found")
-    return await Quiz_Pydantic.from_tortoise_orm(quiz)
+# ! get by kuis id
+@router.get("/{quiz_id}", response_model=QuizWithStatusAll)
+async def get_quiz_by_id(quiz_id: int, current_user: User = Depends(get_current_user)):
+    # Try to find participation
+    participation = await QuizParticipant.filter(user=current_user.id, quiz_id=quiz_id).prefetch_related("quiz").first()
+    if participation:
+        return {
+            "id": participation.quiz.id,
+            "title": participation.quiz.title,
+            "description": participation.quiz.description,
+            "created_at": participation.quiz.created_at,
+            "end_time": participation.quiz.end_time,
+            "join_code": participation.quiz.join_code,
+            "status": participation.status,
+            "completed": None
+        }
+
+    # Try to find as creator
+    quiz = await Quiz.filter(creator=current_user.id, id=quiz_id).first()
+    if quiz:
+        return {
+            "id": quiz.id,
+            "title": quiz.title,
+            "description": quiz.description,
+            "created_at": quiz.created_at,
+            "end_time": quiz.end_time,
+            "join_code": quiz.join_code,
+            "status": None,
+            "completed": quiz.completed
+        }
+
+    raise HTTPException(status_code=404, detail="Quiz not found. You either not enrolled in this quiz or you are not the creator of this quiz")
+
 
 # ! create a quiz with questions
 @router.post("/create-with-questions")
@@ -45,7 +71,7 @@ async def create_quiz_with_questions(
                 lecturer_overall_notes=payload.lecturer_overall_notes,
                 start_time=payload.start_time,
                 end_time=payload.end_time,
-                # completed=payload.completed,
+                duration=payload.duration,
                 join_code=code,
             )
             break

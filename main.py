@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware  # 👈 Import this
 from app.db.db import init_db, close_db
 from app.routes import (
     quiz,
@@ -8,11 +9,22 @@ from app.routes import (
     quiz_participants,
     student_answers,
     ai_analyzer,
-    assesment
+    assesment,
+    assistant_openai,
 )
 
 app = FastAPI()
 
+# 👇 Add this CORS middleware configuration (allows all origins)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 👈 Allow all origins (use only in development)
+    allow_credentials=False,  # 👈 Must be False when using allow_origins=["*"]
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include all routers
 app.include_router(userAuth.router, prefix="/api/auth", tags=["userAuth"])
 app.include_router(user.router, prefix="/api/user", tags=["user"])
 app.include_router(quiz.router, prefix="/api/quiz", tags=["quiz"])
@@ -22,16 +34,16 @@ app.include_router(
     prefix="/api/quiz_participants",
     tags=["quiz_participants"],
 )
-
 app.include_router(
     student_answers.router, prefix="/api/student/answers", tags=["student_answers"]
 )
 app.include_router(ai_analyzer.router, prefix="/api/ai", tags=["AI Analyzer"])
+app.include_router(assesment.router, prefix="/api/assesment", tags=["Assesment Result"])
+app.include_router(
+    assistant_openai.router, prefix="/api/assistant", tags=["Chatbot OpenAI"]
+)
 
-app.include_router(assesment.router, prefix="/api/assesment",tags=["Assesment Result"])
-
-
-# startup
+# DB startup/shutdown events
 @app.on_event("startup")
 async def startup_event():
     await init_db()

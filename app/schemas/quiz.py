@@ -28,16 +28,22 @@ class QuizRead(BaseModel):
         from_attributes = True
 
 class QuizWithStatusAll(BaseModel):
+    id: int
     title: str
     description: str
     created_at: datetime
+    end_time: datetime
+    join_code: str
     status: Optional[StatusType] = None  # Nullable field
     completed: Optional[bool] = None     # Nullable field
 
 class QuizWithStatus(BaseModel):
+    id: int
     title: str
     description: str
     created_at: datetime
+    end_time: datetime
+    join_code: str
     status: StatusType
 
 
@@ -53,6 +59,7 @@ class QuizReadWithQuestions(BaseModel):
     title: str
     description: str
     join_code: str
+    duration: Optional[int]
     created_at: datetime
     questions: List[QuestionReadForStudent]
 
