@@ -1,47 +1,42 @@
-from typing import Optional
-from datetime import datetime
 from pydantic import BaseModel, Field
-from .quiz import QuizRead  # if you also want to nest quiz data
-from app.models.models import AnswerType
+from typing import Optional, List
+from datetime import datetime
+from app.utils.util import AnswerType, StatusType  # Assuming this is your Enum
 
-# Shared properties
-class QuestionBase(BaseModel):
-    # ... means required
-    text: str = Field(..., description="Full question text")
-    type: AnswerType = Field(
-        AnswerType.ESSAY,
-        description="Answer format: text / essay or multiple choices"
-    )
-    rubric: str = Field(..., max_length=100, description="Grading rubric or points")
+class QuestionCreate(BaseModel):
+    text: str
+    type: AnswerType
+    options: Optional[List[str]] = None
+    expected_answer: Optional[List[str]] = None
+    rubric: str
+    rubric_max_score: int = Field(default=100)
 
-# Properties to receive on creation
-class QuestionCreate(QuestionBase):
-    quiz_id: int = Field(..., description="ID of the quiz this question belongs to")
-    lecturer_answer_text: Optional[str] = Field(None, description="Lecturer's answer for essay questions")
-    options: Optional[str] = Field(None, description="JSON string of options for multiple choice questions")
-    correct_answer_mc: Optional[str] = Field(None, description="Correct answer for multiple choice questions")
+class QuizWithQuestionsCreate(BaseModel):
+    title: str
+    description: str
+    duration: int
+    lecturer_overall_notes: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    completed: bool = False
+    questions: List[QuestionCreate]
 
-# Properties to receive on updates (all optional)
-class QuestionUpdate(BaseModel):
-    text: Optional[str] = Field(None, description="Updated question text")
-    type: Optional[AnswerType] = Field(None, description="Updated delivery format")
-    rubric: Optional[str] = Field(
-        None, max_length=100, description="Updated rubric or points"
-    )
 
-# Properties to return to the client
-class QuestionRead(QuestionBase):
+class QuestionRead(BaseModel):
     id: int
-    quiz_id: int = Field(..., description="ID of the parent quiz")
-    lecturer_answer_text: Optional[str]
-    options: Optional[str]
-    correct_answer_mc: Optional[str]
+    quiz_id: int
+    text: str
+    type: AnswerType
+    options: Optional[List[str]] = None
+    expected_answer: Optional[List[str]] = None
+    rubric: str
+    rubric_max_score: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-
-# Optionally, if you want to nest the quiz data inside your question responses:
-class QuestionReadWithQuiz(QuestionRead):
-    quiz: QuizRead
+class QuestionReadForStudent(BaseModel):
+    id: int
+    quiz_id: int
+        from_attributes = True
