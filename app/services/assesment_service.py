@@ -115,6 +115,10 @@ class AssessmentService:
 
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
+                    
+                    # AI ANALYZER CHECK
+                    # if (question_data.student_answer_text):
+                        
                     print('==question_data.student_answer_text', question_data.student_answer_text)
                     
                     if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:

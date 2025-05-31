@@ -42,6 +42,8 @@ class QuizWithStatus(BaseModel):
     title: str
     description: str
     created_at: datetime
+    end_time: datetime
+    join_code: str
     status: StatusType
 
 

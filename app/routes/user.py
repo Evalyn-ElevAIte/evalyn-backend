@@ -78,6 +78,8 @@ async def get_user_quizzes(current_user: User = Depends(get_current_user)):
             title=p.quiz.title,
             description=p.quiz.description,
             created_at=p.quiz.created_at,
+            join_code=p.quiz.join_code,
+            end_time=p.quiz.end_time,
             status=p.status
         )
         for p in participations
