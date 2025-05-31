@@ -126,8 +126,12 @@ class AssessmentService:
                             pass  # fallback to treating it as plain text if not valid JSON
                     
                     if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:
-                        value = list(question_data.student_answer_text.values())[0]
-                        plagiarism_score = await check_ai_with_sapling(value)
+                        first_key = next(iter(question_data.student_answer_text), None)
+                        if first_key == "text":
+                            value = list(question_data.student_answer_text.values())[0]
+                            plagiarism_score = await check_ai_with_sapling(value)
+                        else: 
+                            plagiarism_score = 0
                     else:
                         plagiarism_score = await check_ai_with_sapling(question_data.student_answer_text)
                     
