@@ -65,7 +65,7 @@ class Question(Model):
 class QuizParticipant(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField("models.User", related_name="participants")
-    quiz = fields.ForeignKeyField("models.Quiz", related_name="quiz")
+    quiz = fields.ForeignKeyField("models.Quiz", related_name="participants")
     status = fields.CharEnumField(StatusType)
     score = fields.IntField(default=0)
     joined_at = fields.DatetimeField(auto_now_add=True)
