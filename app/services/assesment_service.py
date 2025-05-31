@@ -116,20 +116,22 @@ class AssessmentService:
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
                     
-                    # AI ANALYZER CHECK
-                    # if (question_data.student_answer_text):
-                        
-                    print('==question_data.student_answer_text', question_data.student_answer_text)
+                    # == AI ANALYZER CHECK ==
+                    print('==question_data.student_answer_text : ', question_data.student_answer_text)
+                    
+                    if isinstance(question_data.student_answer_text, str):
+                        try:
+                            question_data.student_answer_text = json.loads(question_data.student_answer_text)
+                        except json.JSONDecodeError:
+                            pass  # fallback to treating it as plain text if not valid JSON
                     
                     if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:
                         value = list(question_data.student_answer_text.values())[0]
-                        print('==value', value)
                         plagiarism_score = await check_ai_with_sapling(value)
                     else:
-                        # Handle error or fallback
-                        print("Invalid or empty student answer format")
-                        plagiarism_score = None
-                        
+                        plagiarism_score = await check_ai_with_sapling(question_data.student_answer_text)
+                    
+                    plagiarism_score = plagiarism_score['score']
                     print('==final plagiarism value : ', plagiarism_score)
                         
                     question_assessment = await QuestionAssessment.create(
