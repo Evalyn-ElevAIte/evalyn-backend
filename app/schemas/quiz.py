@@ -28,9 +28,12 @@ class QuizRead(BaseModel):
         from_attributes = True
 
 class QuizWithStatusAll(BaseModel):
+    id: int
     title: str
     description: str
     created_at: datetime
+    end_time: datetime
+    join_code: str
     status: Optional[StatusType] = None  # Nullable field
     completed: Optional[bool] = None     # Nullable field
 
@@ -39,6 +42,8 @@ class QuizWithStatus(BaseModel):
     title: str
     description: str
     created_at: datetime
+    end_time: datetime
+    join_code: str
     status: StatusType
 
 

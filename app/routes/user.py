@@ -33,22 +33,30 @@ async def get_all_user_quizzes(current_user: User = Depends(get_current_user)):
     # Quizzes where user is the creator
     created_quizzes = await Quiz.filter(creator=current_user.id)
 
-    # Combine both, converting them to a unified QuizWithStatus structure
+    # Combine both
     combined = []
 
     for p in participations:
         combined.append({
+            "id": p.quiz.id,
             "title": p.quiz.title,
             "description": p.quiz.description,
             "created_at": p.quiz.created_at,
-            "status": p.status
+            "end_time": p.quiz.end_time,
+            "join_code": p.quiz.join_code,
+            "status": p.status,
+            "completed": None
         })
 
     for q in created_quizzes:
         combined.append({
+            "id": q.id,
             "title": q.title,
             "description": q.description,
             "created_at": q.created_at,
+            "end_time": q.end_time,
+            "join_code": q.join_code,
+            "status": None,
             "completed": q.completed
         })
 
@@ -70,6 +78,8 @@ async def get_user_quizzes(current_user: User = Depends(get_current_user)):
             title=p.quiz.title,
             description=p.quiz.description,
             created_at=p.quiz.created_at,
+            join_code=p.quiz.join_code,
+            end_time=p.quiz.end_time,
             status=p.status
         )
         for p in participations
@@ -83,6 +93,10 @@ async def get_user_quizzes_creator(current_user: User = Depends(get_current_user
     quizes = await Quiz.filter(creator=current_user.id).prefetch_related("participants__user")
     if not quizes:
         raise HTTPException(status_code=404, detail="No quizzes found for this user")
+    
+    # Sort quizzes by created_at descending (newest first)
+    quizes.sort(key=lambda q: q.created_at, reverse=True)
+    
     return quizes
     
 # # ! get data kuis yang diikuti oleh user
