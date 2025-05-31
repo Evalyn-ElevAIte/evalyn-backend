@@ -17,7 +17,7 @@ from app.models.models import (
     MissingConcept,
     User,  # Import User model
     Quiz,  # Import Quiz model
-    QuizParticipant
+    QuizParticipant,
 )
 from app.schemas.assesment import (
     AssessmentCreate,
@@ -115,25 +115,35 @@ class AssessmentService:
 
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
-                    
+
                     # == AI ANALYZER CHECK ==
-                    print('==question_data.student_answer_text : ', question_data.student_answer_text)
-                    
+                    print(
+                        "==question_data.student_answer_text : ",
+                        question_data.student_answer_text,
+                    )
+
                     if isinstance(question_data.student_answer_text, str):
                         try:
-                            question_data.student_answer_text = json.loads(question_data.student_answer_text)
+                            question_data.student_answer_text = json.loads(
+                                question_data.student_answer_text
+                            )
                         except json.JSONDecodeError:
                             pass  # fallback to treating it as plain text if not valid JSON
-                    
-                    if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:
+
+                    if (
+                        isinstance(question_data.student_answer_text, dict)
+                        and question_data.student_answer_text
+                    ):
                         value = list(question_data.student_answer_text.values())[0]
                         plagiarism_score = await check_ai_with_sapling(value)
                     else:
-                        plagiarism_score = await check_ai_with_sapling(question_data.student_answer_text)
-                    
-                    plagiarism_score = plagiarism_score['score']
-                    print('==final plagiarism value : ', plagiarism_score)
-                        
+                        plagiarism_score = await check_ai_with_sapling(
+                            question_data.student_answer_text
+                        )
+
+                    plagiarism_score = plagiarism_score["score"]
+                    print("==final plagiarism value : ", plagiarism_score)
+
                     question_assessment = await QuestionAssessment.create(
                         assessment=assessment,
                         question_id=question_data.question_id,
@@ -143,7 +153,7 @@ class AssessmentService:
                         rubric=question_data.rubric,
                         rubric_max_score=question_data.rubric_max_score,
                         score=question_data.score,
-                        rating_plagiarism= plagiarism_score,
+                        rating_plagiarism=plagiarism_score,
                         max_score_possible=question_data.max_score_possible,
                         overall_question_feedback=question_data.overall_question_feedback,
                         using_db=conn,
@@ -514,10 +524,9 @@ class AssessmentService:
             for assessment in assessments:
                 # Get participant status for this user and quiz
                 participant = await QuizParticipant.get_or_none(
-                    user_id=assessment.user_id,
-                    quiz_id=quiz_id
+                    user_id=assessment.user_id, quiz_id=quiz_id
                 )
-                
+
                 assessment_results.append(
                     {
                         "id": assessment.id,
@@ -547,7 +556,9 @@ class AssessmentService:
                         "summary_of_performance": assessment.summary_of_performance,
                         "general_positive_feedback": assessment.general_positive_feedback,
                         "general_areas_for_improvement": assessment.general_areas_for_improvement,
-                        "participant_status": participant.status if participant else None,
+                        "participant_status": (
+                            participant.status if participant else None
+                        ),
                     }
                 )
 
@@ -743,3 +754,379 @@ class AssessmentService:
         except Exception as e:
             logger.error(f"Error getting quiz statistics: {e}")
             return {}
+
+
+    @staticmethod
+    async def get_all_students_assessments(
+        quiz_id: int,
+        student_name: Optional[str] = None,
+        min_score: Optional[float] = None,
+        max_score: Optional[float] = None,
+        status: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Get all students' assessments for a specific quiz (TEACHER VIEW)
+        Shows scores for all students in one quiz
+        """
+        try:
+            # Get quiz information first
+            quiz = await Quiz.get_or_none(id=quiz_id).select_related("creator")
+            if not quiz:
+                return {"quiz": None, "assessments": [], "error": "Quiz not found"}
+
+            # Get quiz participants to check status
+            participants_query = QuizParticipant.filter(quiz_id=quiz_id).select_related(
+                "user"
+            )
+
+            # Filter by student name if provided
+            if student_name:
+                participants_query = participants_query.filter(
+                    user__name__icontains=student_name
+                )
+
+            # Filter by status if provided
+            if status:
+                participants_query = participants_query.filter(status=status)
+
+            participants = await participants_query
+
+            # Get assessments for these participants
+            user_ids = [p.user_id for p in participants]
+            assessment_query = Assessment.filter(
+                quiz_id=quiz_id, user_id__in=user_ids
+            ).select_related("user")
+
+            # Apply score filters
+            if min_score is not None:
+                assessment_query = assessment_query.filter(overall_score__gte=min_score)
+            if max_score is not None:
+                assessment_query = assessment_query.filter(overall_score__lte=max_score)
+
+            # Get assessments with pagination
+            assessments = (
+                await assessment_query.order_by("-assessment_timestamp_utc")
+                .offset(offset)
+                .limit(limit)
+            )
+
+            # Create a mapping of participants for quick lookup
+            participant_map = {p.user_id: p for p in participants}
+
+            # Format response
+            assessment_results = []
+            for assessment in assessments:
+                participant = participant_map.get(assessment.user_id)
+
+                assessment_results.append(
+                    {
+                        "assessment_id": assessment.id,
+                        "user_id": assessment.user_id,
+                        "student_name": (
+                            assessment.user.name
+                            if hasattr(assessment.user, "name")
+                            else assessment.user.username
+                        ),
+                        "student_email": getattr(assessment.user, "email", None),
+                        "overall_score": assessment.overall_score,
+                        "overall_max_score": assessment.overall_max_score,
+                        "score_percentage": round(
+                            (
+                                (
+                                    assessment.overall_score
+                                    / assessment.overall_max_score
+                                    * 100
+                                )
+                                if assessment.overall_max_score > 0
+                                else 0
+                            ),
+                            2,
+                        ),
+                        "status": participant.status if participant else "unknown",
+                        "assessment_timestamp_utc": assessment.assessment_timestamp_utc,
+                        "submission_timestamp_utc": assessment.submission_timestamp_utc,
+                        "summary_of_performance": assessment.summary_of_performance,
+                        "general_positive_feedback": assessment.general_positive_feedback,
+                        "general_areas_for_improvement": assessment.general_areas_for_improvement,
+                        "can_be_graded": (
+                            participant.status == "submited" if participant else False
+                        ),
+                    }
+                )
+
+            # Also include participants who haven't submitted yet
+            assessed_user_ids = {a.user_id for a in assessments}
+            print(assessed_user_ids)
+            for participant in participants:
+                if participant.user_id not in assessed_user_ids:
+                    assessment_results.append(
+                        {
+                            "id": None,
+                            "user_id": participant.user_id,
+                            "student_name": (
+                                participant.user.name
+                                if hasattr(participant.user, "name")
+                                else participant.user.username
+                            ),
+                            "student_email": getattr(participant.user, "email", None),
+                            "overall_score": None,
+                            "overall_max_score": None,
+                            "score_percentage": None,
+                            "status": participant.status,
+                            "assessment_timestamp_utc": None,
+                            "submission_timestamp_utc": None,
+                            "summary_of_performance": None,
+                            "general_positive_feedback": None,
+                            "general_areas_for_improvement": None,
+                            "can_be_graded": False,
+                        }
+                    )
+
+            # Prepare quiz information
+            quiz_info = {
+                "id": quiz.id,
+                "title": quiz.title,
+                "description": quiz.description,
+                "creator_name": (
+                    quiz.creator.name
+                    if hasattr(quiz.creator, "name")
+                    else quiz.creator.username
+                ),
+                "join_code": quiz.join_code,
+                "completed": quiz.completed,
+                "start_time": quiz.start_time,
+                "end_time": quiz.end_time,
+                "created_at": quiz.created_at,
+            }
+
+            return {
+                "quiz": quiz_info,
+                "assessments": assessment_results,
+                "pagination": {
+                    "offset": offset,
+                    "limit": limit,
+                    "total_returned": len(assessment_results),
+                },
+                "filters_applied": {
+                    "student_name": student_name,
+                    "min_score": min_score,
+                    "max_score": max_score,
+                    "status": status,
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting all students assessments: {e}")
+            return {"quiz": None, "assessments": [], "error": str(e)}
+
+
+    @staticmethod
+    async def update_assessment_grading(
+        assessment_id: int,
+        question_scores: List[Dict[str, Any]],  # [{"question_id": int, "new_score": float}]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Update assessment grading by teacher
+        Updates individual question scores and recalculates overall score
+        Changes status from "submited" to "graded"
+        """
+        async with in_transaction() as conn:
+            try:
+                # Get the assessment with all question assessments
+                assessment = await Assessment.get(id=assessment_id).prefetch_related(
+                    "question_assessments"
+                )
+
+                if not assessment:
+                    return None
+
+                # Update individual question scores
+                total_score = 0
+                total_max_score = 0
+
+                for score_update in question_scores:
+                    question_id = score_update.question_id
+                    new_score = score_update.new_score
+
+                    # Find and update the specific question assessment
+                    question_assessment = await QuestionAssessment.get_or_none(
+                        assessment_id=assessment_id, question_id=question_id
+                    )
+
+                    if question_assessment:
+                        question_assessment.score = new_score
+                        await question_assessment.save(using_db=conn)
+
+                        total_score += new_score
+                        total_max_score += question_assessment.max_score_possible
+
+                # Update overall assessment score
+                assessment.overall_score = total_score
+                assessment.overall_max_score = total_max_score
+                await assessment.save(using_db=conn)
+
+                # Update participant status to "graded"
+                participant = await QuizParticipant.get_or_none(
+                    user_id=assessment.user_id, quiz_id=assessment.quiz_id
+                )
+
+                if participant:
+                    participant.status = "graded"
+                    await participant.save(using_db=conn)
+
+                # Calculate new percentage
+                print(total_score,total_max_score)
+                new_percentage = round(
+                    (total_score / total_max_score * 100) if total_max_score > 0 else 0, 2
+                )
+
+                return {
+                    "new_overall_score": total_score,
+                    "new_score_percentage": new_percentage,
+                    "updated_questions": len(question_scores),
+                }
+
+            except Exception as e:
+                logger.error(f"Error updating assessment grading: {e}")
+                raise e
+
+
+    @staticmethod
+    async def get_student_own_assessments(
+        user_id: int,
+        quiz_id: Optional[int] = None,
+        status: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 10,
+    ) -> Dict[str, Any]:
+        """
+        Get student's own assessments (STUDENT VIEW)
+        Student can only see their own assessments when status is "graded"
+        """
+        try:
+            # Get participant records for this student
+            participants_query = QuizParticipant.filter(user_id=user_id).select_related(
+                "quiz"
+            )
+
+            # Filter by quiz if specified
+            if quiz_id:
+                participants_query = participants_query.filter(quiz_id=quiz_id)
+
+            # Filter by status if specified
+            if status:
+                participants_query = participants_query.filter(status=status)
+            else:
+                # By default, only show graded assessments to students
+                participants_query = participants_query.filter(status="graded")
+
+            participants = await participants_query
+
+            # Get assessments for graded quizzes
+            quiz_ids = [p.quiz_id for p in participants if p.status == "graded"]
+
+            if not quiz_ids:
+                return {
+                    "assessments": [],
+                    "pagination": {
+                        "offset": offset,
+                        "limit": limit,
+                        "total_returned": 0,
+                    },
+                    "message": "No graded assessments available yet",
+                }
+
+            # Get assessments
+            assessment_query = (
+                Assessment.filter(user_id=user_id, quiz_id__in=quiz_ids)
+                .select_related("quiz")
+                .prefetch_related(
+                    "question_assessments__rubric_components",
+                    "question_assessments__key_points",
+                    "question_assessments__missing_concepts",
+                )
+            )
+
+            assessments = (
+                await assessment_query.order_by("-assessment_timestamp_utc")
+                .offset(offset)
+                .limit(limit)
+            )
+
+            # Create participant mapping for status lookup
+            participant_map = {p.quiz_id: p for p in participants}
+
+            # Format response
+            assessment_results = []
+            for assessment in assessments:
+                participant = participant_map.get(assessment.quiz_id)
+
+                # Only include if status is graded
+                if participant and participant.status == "graded":
+                    assessment_results.append(
+                        {
+                            "id": assessment.id,
+                            "quiz_id": assessment.quiz_id,
+                            "quiz_title": assessment.quiz.title,
+                            "quiz_description": assessment.quiz.description,
+                            "overall_score": assessment.overall_score,
+                            "overall_max_score": assessment.overall_max_score,
+                            "score_percentage": round(
+                                (
+                                    (
+                                        assessment.overall_score
+                                        / assessment.overall_max_score
+                                        * 100
+                                    )
+                                    if assessment.overall_max_score > 0
+                                    else 0
+                                ),
+                                2,
+                            ),
+                            "assessment_timestamp_utc": assessment.assessment_timestamp_utc,
+                            "submission_timestamp_utc": assessment.submission_timestamp_utc,
+                            "summary_of_performance": assessment.summary_of_performance,
+                            "general_positive_feedback": assessment.general_positive_feedback,
+                            "general_areas_for_improvement": assessment.general_areas_for_improvement,
+                            "status": participant.status,
+                            "question_assessments": [
+                                {
+                                    "question_id": qa.question_id,
+                                    "question_text": qa.question_text,
+                                    "student_answer": qa.student_answer_text,
+                                    "score": qa.score,
+                                    "max_score_possible": qa.max_score_possible,
+                                    "score_percentage": round(
+                                        (
+                                            (qa.score / qa.max_score_possible * 100)
+                                            if qa.max_score_possible > 0
+                                            else 0
+                                        ),
+                                        2,
+                                    ),
+                                    "overall_question_feedback": qa.overall_question_feedback,
+                                    "rating_plagiarism": qa.rating_plagiarism,
+                                }
+                                for qa in assessment.question_assessments
+                            ],
+                        }
+                    )
+
+            return {
+                "assessments": assessment_results,
+                "pagination": {
+                    "offset": offset,
+                    "limit": limit,
+                    "total_returned": len(assessment_results),
+                },
+                "filters_applied": {
+                    "quiz_id": quiz_id,
+                    "status": status or "graded",
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"Error getting student own assessments: {e}")
+            return {"assessments": [], "error": str(e)}
