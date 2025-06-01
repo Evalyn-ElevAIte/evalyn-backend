@@ -2,6 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel
+from fastapi import Response
+from fastapi.responses import StreamingResponse
+import csv
+import io
+from typing import Optional
+from datetime import datetime
 
 from app.services.assesment_service import AssessmentService
 from app.schemas.assesment import (
@@ -36,6 +42,60 @@ async def get_assessment(id: int, quiz_id: Optional[int] = None):
     if not result:
         raise HTTPException(status_code=404, detail="Assessment not found")
     return result
+
+
+
+@router.get("/{id}/csv")
+async def download_assessment_csv(id: int, quiz_id: Optional[int] = None):
+    """
+    Download assessment result as CSV
+    """
+    result = await AssessmentService.get_assessment_by_id(id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    # Create CSV in-memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Write metadata headers
+    writer.writerow(["Field", "Value"])
+    writer.writerow(["Assessment ID", result.id])
+    writer.writerow(["User ID", result.user_id])
+    writer.writerow(["Quiz ID", result.quiz_id])
+    writer.writerow(["Submission Time (UTC)", result.submission_timestamp_utc])
+    writer.writerow(["Assessment Time (UTC)", result.assessment_timestamp_utc])
+    writer.writerow(["Score", result.overall_score])
+    writer.writerow(["Max Score", result.overall_max_score])
+    writer.writerow(["Confidence (Scoring)", result.overall_scoring_confidence])
+    writer.writerow(["Confidence (Feedback)", result.feedback_generation_confidence])
+    writer.writerow(["Model Used", result.model_used])
+    writer.writerow(["Prompt Version", result.prompt_version])
+    writer.writerow([])
+    writer.writerow(["Summary of Performance", result.summary_of_performance])
+    writer.writerow(["Positive Feedback", result.general_positive_feedback])
+    writer.writerow(["Areas for Improvement", result.general_areas_for_improvement])
+    writer.writerow([])
+
+    # Write question assessments
+    writer.writerow(["Question ID", "Question Text", "Student Answer", "Lecturer Answer", "Rubric", "Score", "Max Score", "Feedback"])
+    for qa in result.question_assessments:
+        writer.writerow([
+            qa.question_id,
+            qa.question_text,
+            qa.student_answer_text,
+            qa.lecturer_answer_text,
+            qa.rubric,
+            qa.score,
+            qa.max_score_possible,
+            qa.overall_question_feedback
+        ])
+
+    output.seek(0)
+    filename = f"assessment_{result.id}.csv"
+    return StreamingResponse(output, media_type="text/csv", headers={
+        "Content-Disposition": f"attachment; filename={filename}"
+    })
 
 
 @router.get("/", response_model=List[AssessmentResponse])
