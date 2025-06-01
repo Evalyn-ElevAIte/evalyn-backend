@@ -59,7 +59,7 @@ async def get_quiz_by_id(quiz_id: int, current_user: User = Depends(get_current_
             "question_count": question_count
         }
 
-    raise HTTPException(status_code=404, detail="Quiz not found. You either not enrolled in this quiz or you are not the creator of this quiz")
+    raise HTTPException(status_code=200, detail="Quiz not found. You either not enrolled in this quiz or you are not the creator of this quiz")
 
 
 # ! create a quiz with questions
