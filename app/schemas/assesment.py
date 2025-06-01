@@ -89,7 +89,7 @@ class MissingConceptResponse(BaseModel):
 
 class QuestionAssessmentResponse(BaseModel):
     id: int
-    question_id: str
+    question_id: int
     question_text: str
     student_answer_text: Optional[str]
     lecturer_answer_text: Optional[str]
