@@ -4,6 +4,8 @@ from app.models.models import Question, User
 from app.schemas.question import QuestionCreate, QuestionRead
 from app.dependencies import get_current_user
 from tortoise.contrib.pydantic import pydantic_model_creator
+from app.models.models import QuestionResponse, Question, QuizParticipant, Quiz
+
 
 router = APIRouter()
 
@@ -31,3 +33,4 @@ async def create_question(
         rubric_max_score=payload.rubric_max_score
     )
     return await Question_Pydantic.from_tortoise_orm(question)
+

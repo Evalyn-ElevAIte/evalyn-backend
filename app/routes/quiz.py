@@ -4,6 +4,8 @@ from tortoise.exceptions import IntegrityError
 from app.models.models import Quiz, User, Question, QuizParticipant
 from app.schemas.quiz import QuizCreate, QuizRead, QuizWithStatusAll
 from app.schemas.question import QuizWithQuestionsCreate
+from app.schemas.quiz import QuizReadWithQuestions
+from app.schemas.question import QuestionReadForStudent
 
 from app.utils.util import make_join_code
 from tortoise.contrib.pydantic import pydantic_model_creator
@@ -100,6 +102,52 @@ async def create_quiz_with_questions(
         )
 
     return {"message": "Quiz and questions created successfully", "quiz_id": quiz.id}
+
+@router.get("/quiz/{quiz_id}", response_model=QuizReadWithQuestions)
+async def get_quiz_with_questions(
+    quiz_id: int,
+    current_user=Depends(get_current_user)
+):
+    # Check if quiz exists
+    quiz = await Quiz.get_or_none(id=quiz_id)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+
+    # Check if user is participant in the quiz
+    participant = await QuizParticipant.get_or_none(
+        user_id=current_user.id,
+        quiz_id=quiz_id
+    )
+    if not participant:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not a participant in this quiz"
+        )
+
+    # Get all questions for the specified quiz
+    questions = await Question.filter(quiz_id=quiz_id)
+    await quiz.fetch_related('creator')
+    
+    return QuizReadWithQuestions(
+        id=quiz.id,
+        title=quiz.title,
+        creator_id=quiz.creator.id,
+        description=quiz.description,
+        join_code=quiz.join_code,
+        created_at=quiz.created_at,
+        duration=quiz.duration,
+        questions=[
+            QuestionRead(
+                id=q.id,
+                quiz_id=q.quiz_id,
+                text=q.text,
+                type=q.type,
+                options=q.options,
+                expected_answer=q.expected_answer,
+                created_at=q.created_at
+            ) for q in questions
+        ]
+    )
 
 
 # ! create a quiz

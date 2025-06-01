@@ -46,3 +46,4 @@ class QuestionReadForStudent(BaseModel):
 
     class Config:
         from_attributes = True
+
