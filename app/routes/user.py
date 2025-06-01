@@ -5,6 +5,7 @@ from app.dependencies import get_current_user
 from app.schemas.quiz import QuizWithStatusAll, QuizWithStatus, QuizWithStatusCreator
 from itertools import chain
 from tortoise.contrib.pydantic import pydantic_model_creator
+from fastapi.responses import JSONResponse
 
 # router = APIRouter(dependencies=[Depends(get_current_user)])
 router = APIRouter()
@@ -25,6 +26,7 @@ async def get_user(current_user: User = Depends(get_current_user)):
     return current_user
 
 # ! get seluruh kuis user (creator dan participant)
+# ! get seluruh kuis user (creator dan participant)
 @router.get('/quizzes/all', response_model=list[QuizWithStatusAll])
 async def get_all_user_quizzes(current_user: User = Depends(get_current_user)):
     # Quizzes where user is a participant
@@ -32,6 +34,13 @@ async def get_all_user_quizzes(current_user: User = Depends(get_current_user)):
     
     # Quizzes where user is the creator
     created_quizzes = await Quiz.filter(creator=current_user.id)
+
+    # If no quizzes at all
+    if not participations and not created_quizzes:
+        return JSONResponse(
+            content={"message": "User has no quizzes."},
+            status_code=200
+        )
 
     # Combine both
     combined = []
@@ -70,7 +79,7 @@ async def get_all_user_quizzes(current_user: User = Depends(get_current_user)):
 async def get_user_quizzes(current_user: User = Depends(get_current_user)):
     participations = await QuizParticipant.filter(user=current_user.id).prefetch_related("quiz").order_by("-quiz__created_at")
     if not participations:
-        raise HTTPException(status_code=404, detail="User's quizzes not found")
+        raise HTTPException(status_code=200, detail="User's quizzes not found")
     
     result = [
         QuizWithStatus(
@@ -92,7 +101,7 @@ async def get_user_quizzes(current_user: User = Depends(get_current_user)):
 async def get_user_quizzes_creator(current_user: User = Depends(get_current_user)):
     quizes = await Quiz.filter(creator=current_user.id).prefetch_related("participants__user")
     if not quizes:
-        raise HTTPException(status_code=404, detail="No quizzes found for this user")
+        raise HTTPException(status_code=200, detail="No quizzes found for this user")
     
     # Sort quizzes by created_at descending (newest first)
     quizes.sort(key=lambda q: q.created_at, reverse=True)
