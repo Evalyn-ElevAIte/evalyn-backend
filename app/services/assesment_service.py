@@ -17,7 +17,7 @@ from app.models.models import (
     MissingConcept,
     User,  # Import User model
     Quiz,  # Import Quiz model
-    QuizParticipant
+    QuizParticipant,
 )
 from app.schemas.assesment import (
     AssessmentCreate,
@@ -115,29 +115,48 @@ class AssessmentService:
 
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
-                    
-                    # == AI ANALYZER CHECK ==
-                    print('==question_data.student_answer_text : ', question_data.student_answer_text)
-                    
+                     # == AI ANALYZER CHECK ==
+                    print("==question_data.student_answer_text : ", question_data.student_answer_text)
+                    print(type(question_data.student_answer_text))
+
+                    # Check if it's a string that needs parsing
                     if isinstance(question_data.student_answer_text, str):
                         try:
+                            # First try JSON parsing (for properly formatted JSON)
                             question_data.student_answer_text = json.loads(question_data.student_answer_text)
+                            print("Successfully parsed JSON string")
                         except json.JSONDecodeError:
-                            pass  # fallback to treating it as plain text if not valid JSON
+                            try:
+                                # If JSON fails, try using ast.literal_eval for Python dict strings
+                                import ast
+                                question_data.student_answer_text = ast.literal_eval(question_data.student_answer_text)
+                                print("Successfully parsed Python dict string")
+                            except (ValueError, SyntaxError):
+                                print("Not valid JSON or Python dict, treating as plain text")
+                                pass  # fallback to treating it as plain text
                     
-                    if isinstance(question_data.student_answer_text, dict) and question_data.student_answer_text:
-                        first_key = next(iter(question_data.student_answer_text), None)
-                        if first_key == "text":
-                            value = list(question_data.student_answer_text.values())[0]
-                            plagiarism_score = await check_ai_with_sapling(value)
-                        else: 
-                            plagiarism_score = 0
+                    # If it's already a dict, no need to parse
+                    elif isinstance(question_data.student_answer_text, dict):
+                        print("Already a dictionary, no parsing needed")
+
+                    plagiarism_score = None  # Default value if not set by checks
+                    
+                    # Now check if we have a dictionary with text content
+                    if isinstance(question_data.student_answer_text, dict):
+                        if "text" in question_data.student_answer_text:
+                            text = question_data.student_answer_text["text"]
+                            plagiarism_score_result = await check_ai_with_sapling(text)
+                            print(f"plagiarism score: {plagiarism_score_result}")
+                            plagiarism_score = plagiarism_score_result["score"]
+                        else:
+                            print("No 'text' key found in dictionary")
                     else:
-                        plagiarism_score = await check_ai_with_sapling(question_data.student_answer_text)
+                        print("student_answer_text is not a dictionary")
                     
-                    plagiarism_score = plagiarism_score['score']
-                    print('==final plagiarism value : ', plagiarism_score)
-                        
+                    print(f"Final plagiarism score: {plagiarism_score}")
+
+                    # logger.debug(f"Final plagiarism score: {plagiarism_score}")
+                    print(f"Final plagiarism score: {plagiarism_score}")
                     question_assessment = await QuestionAssessment.create(
                         assessment=assessment,
                         question_id=question_data.question_id,
@@ -147,7 +166,7 @@ class AssessmentService:
                         rubric=question_data.rubric,
                         rubric_max_score=question_data.rubric_max_score,
                         score=question_data.score,
-                        rating_plagiarism= plagiarism_score,
+                        rating_plagiarism=plagiarism_score,
                         max_score_possible=question_data.max_score_possible,
                         overall_question_feedback=question_data.overall_question_feedback,
                         using_db=conn,
@@ -518,10 +537,9 @@ class AssessmentService:
             for assessment in assessments:
                 # Get participant status for this user and quiz
                 participant = await QuizParticipant.get_or_none(
-                    user_id=assessment.user_id,
-                    quiz_id=quiz_id
+                    user_id=assessment.user_id, quiz_id=quiz_id
                 )
-                
+
                 assessment_results.append(
                     {
                         "id": assessment.id,
@@ -551,7 +569,9 @@ class AssessmentService:
                         "summary_of_performance": assessment.summary_of_performance,
                         "general_positive_feedback": assessment.general_positive_feedback,
                         "general_areas_for_improvement": assessment.general_areas_for_improvement,
-                        "participant_status": participant.status if participant else None,
+                        "participant_status": (
+                            participant.status if participant else None
+                        ),
                     }
                 )
 

@@ -130,7 +130,7 @@ class QuestionAssessment(Model):
         related_name="question_assessments",
         on_delete=fields.CASCADE,
     )
-    question_id = fields.CharField(max_length=100)
+    question_id = fields.IntField()
     question_text = fields.TextField()
     student_answer_text = fields.TextField(null=True)
     lecturer_answer_text = fields.TextField(null=True)

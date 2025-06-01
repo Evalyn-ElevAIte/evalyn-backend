@@ -14,6 +14,7 @@ class QuizCreate(BaseModel):
     lecturer_overall_notes: str
     start_time: datetime | None = None
     end_time: datetime | None = None
+    duration: Optional[int] = None
     completed: bool = False
 
 class QuizRead(BaseModel):
@@ -34,6 +35,7 @@ class QuizWithStatusAll(BaseModel):
     created_at: datetime
     end_time: datetime
     join_code: str
+    duration: Optional[int] = None
     status: Optional[StatusType] = None  # Nullable field
     completed: Optional[bool] = None     # Nullable field
 
