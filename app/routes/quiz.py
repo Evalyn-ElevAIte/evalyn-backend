@@ -5,7 +5,7 @@ from app.models.models import Quiz, User, Question, QuizParticipant
 from app.schemas.quiz import QuizCreate, QuizRead, QuizWithStatusAll
 from app.schemas.question import QuizWithQuestionsCreate
 from app.schemas.quiz import QuizReadWithQuestions
-from app.schemas.question import QuestionReadForStudent
+from app.schemas.question import QuestionReadForStudent, QuestionRead
 
 from app.utils.util import make_join_code
 from tortoise.contrib.pydantic import pydantic_model_creator
