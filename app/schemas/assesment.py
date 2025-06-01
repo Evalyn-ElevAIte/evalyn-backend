@@ -98,6 +98,7 @@ class QuestionAssessmentResponse(BaseModel):
     score: int
     max_score_possible: int
     overall_question_feedback: Optional[str]
+    rating_plagiarism:Optional[int]
     created_at: datetime
     rubric_components: List[RubricComponentResponse] = []
     key_points: List[StudentKeyPointResponse] = []
