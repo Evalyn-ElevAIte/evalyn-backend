@@ -38,6 +38,7 @@ class QuizWithStatusAll(BaseModel):
     duration: Optional[int] = None
     status: Optional[StatusType] = None  # Nullable field
     completed: Optional[bool] = None     # Nullable field
+    question_counts: Optional[int]= None 
 
 class QuizWithStatus(BaseModel):
     id: int
