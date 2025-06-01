@@ -115,8 +115,8 @@ async def analyze_quiz(
             )
             
         # Update participant status to graded
-        participant.status = "graded"
-        await participant.save()
+        # participant.status = "graded"
+        # await participant.save()
             
         return {
             "success": True,

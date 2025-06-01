@@ -25,6 +25,7 @@ class StatusType(str, Enum):
     UNFINISHED   = "unfinished"
     SUBMITED = "submited"
     GRADED = "graded"
+    AI_ANALYZED ="Analyzed by AI"
 
 # password helper function
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

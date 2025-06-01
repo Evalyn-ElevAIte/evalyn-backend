@@ -48,9 +48,11 @@ app.include_router(
 async def startup_event():
     await init_db()
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     await close_db()
+
 
 @app.get("/")
 def read_root():

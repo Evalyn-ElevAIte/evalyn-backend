@@ -204,7 +204,6 @@ Return your complete analysis for the **ENTIRE ASSIGNMENT** as a single, valid J
 Return the JSON analysis now:"""
     return prompt.strip()
 
-
 # # --- Example usage of the function with the demo data ---
 # if __name__ == "__main__":
 #     # Call the function with the demo data

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.services.assesment_service import AssessmentService
 from app.schemas.assesment import (
@@ -12,6 +13,14 @@ from app.schemas.assesment import (
 )
 
 router = APIRouter()
+
+# Pydantic models for request bodies
+class QuestionScoreUpdate(BaseModel):
+    question_id: int
+    new_score: int
+
+class AssessmentGradingUpdate(BaseModel):
+    question_scores: List[QuestionScoreUpdate]
 
 
 @router.get("/{id}", response_model=Optional[AssessmentResponse])
@@ -57,94 +66,120 @@ async def get_assessments(
     return await AssessmentService.get_assessments_by_filter(filter_params)
 
 
-# Untuk halaman yang menunjukkan keseluruhan pengerjaan siswa / View Submission Page
-@router.get("/quiz/{quiz_id}/assessments")
-async def get_quiz_assessments(
+# 1. GET ALL STUDENTS ASSESSMENTS (FOR TEACHERS)
+@router.get("/quiz/{quiz_id}/all-students")
+async def get_all_students_assessments(
     quiz_id: int,
-    student_name: Optional[str] = Query(
-        None, description="Filter by student name (partial match)"
-    ),
+    student_name: Optional[str] = Query(None, description="Filter by student name"),
     min_score: Optional[float] = Query(None, description="Minimum score filter"),
     max_score: Optional[float] = Query(None, description="Maximum score filter"),
+    status: Optional[str] = Query(None, description="Filter by status"),
     offset: int = Query(0, description="Pagination offset"),
     limit: int = Query(10, description="Number of results per page"),
 ) -> Dict[str, Any]:
     """
-    Get all assessments for a specific quiz with filtering options
+    Get all students' assessments for a specific quiz (TEACHER VIEW)
+    Shows scores for all students in one quiz
     
-    Ini buat dapetin penilaian 1 kuis yang mencakup pengerjaan seluruh siswa
-
     Args:
         quiz_id: Quiz ID to get assessments for
-        student_name: Optional student name filter (case-insensitive partial match)
+        student_name: Optional student name filter
         min_score: Optional minimum score filter
         max_score: Optional maximum score filter
+        status: Optional status filter (submited, graded, etc.)
         offset: Pagination offset
         limit: Number of results per page
-
-    Returns:
-        Dictionary containing assessments list and metadata
     """
     try:
-        assessments = await AssessmentService.get_quiz_assessments_with_filters(
+        result = await AssessmentService.get_all_students_assessments(
             quiz_id=quiz_id,
             student_name=student_name,
             min_score=min_score,
             max_score=max_score,
+            status=status,
             offset=offset,
             limit=limit,
         )
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving students assessments: {str(e)}"
+        )
 
+# 2. UPDATE STUDENT ASSESSMENT (TEACHER GRADING)
+@router.patch("/{assessment_id}/grade")
+async def update_assessment_grading(
+    assessment_id: int,
+    grading_data: AssessmentGradingUpdate
+) -> Dict[str, Any]:
+    """
+    Update assessment grading by teacher
+    Updates individual question scores and recalculates overall score
+    Changes status from "submited" to "graded"
+    
+    Args:
+        assessment_id: Assessment ID to update
+        grading_data: List of question score updates
+    """
+    try:
+        result = await AssessmentService.update_assessment_grading(
+            assessment_id=assessment_id,
+            question_scores=grading_data.question_scores
+        )
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Assessment not found")
+        
         return {
-            "quiz_id": quiz_id,
-            "assessments": assessments,
-            "pagination": {
-                "offset": offset,
-                "limit": limit,
-                "total_returned": len(assessments),
-            },
-            "filters_applied": {
-                "student_name": student_name,
-                "min_score": min_score,
-                "max_score": max_score,
-            },
+            "message": "Assessment graded successfully",
+            "assessment_id": assessment_id,
+            "updated_scores": grading_data.question_scores,
+            "new_overall_score": result.get("new_overall_score"),
+            "new_score_percentage": result.get("new_score_percentage"),
+            "status": "graded"
         }
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error retrieving quiz assessments: {str(e)}"
+            status_code=500, detail=f"Error updating assessment grading: {str(e)}"
         )
 
 
-@router.get("           ")
-async def get_quiz_statistics(quiz_id: int) -> Dict[str, Any]:
+# 3. GET STUDENT'S OWN ASSESSMENTS (STUDENT VIEW)
+@router.get("/student/my-assessments")
+async def get_my_assessments(
+    user_id: int,  # This should come from current_user authorization
+    quiz_id: Optional[int] = Query(None, description="Filter by specific quiz"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    offset: int = Query(0, description="Pagination offset"),
+    limit: int = Query(10, description="Number of results per page"),
+) -> Dict[str, Any]:
     """
-    Get comprehensive statistics for a specific quiz
-
+    Get student's own assessments (STUDENT VIEW)
+    Student can only see their own assessments when status is "graded"
+    
     Args:
-        quiz_id: Quiz ID to get statistics for
-
-    Returns:
-        Dictionary containing various statistics including:
-        - Total assessments
-        - Average scores and percentages
-        - Score distribution by grade
-        - Top and bottom performers
-        - Date range of assessments
+        user_id: Student's user ID (from authorization)
+        quiz_id: Optional quiz ID filter
+        status: Optional status filter
+        offset: Pagination offset
+        limit: Number of results per page
     """
     try:
-        statistics = await AssessmentService.get_quiz_statistics(quiz_id)
-        if not statistics:
-            raise HTTPException(
-                status_code=404, detail="No assessments found for this quiz"
-            )
-        return statistics
+        result = await AssessmentService.get_student_own_assessments(
+            user_id=user_id,
+            quiz_id=quiz_id,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+        return result
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail=f"Error retrieving quiz statistics: {str(e)}"
+            status_code=500, detail=f"Error retrieving student assessments: {str(e)}"
         )
 
 
-@router.get("/students/{user_id}/recent", response_model=List[AssessmentSummary])
+@router.get("/quiz/{user_id}", response_model=List[AssessmentSummary])
 async def get_student_recent_assessments(user_id: int, quiz_id: int, limit: int = 10):
     """
     Get recent assessments for a student in a specific quiz
@@ -202,3 +237,90 @@ async def get_assessment_statistics(quiz_id: Optional[int] = None):
         quiz_id: Optional quiz ID to filter statistics by
     """
     return await AssessmentService.get_assessment_statistics(quiz_id)
+
+# FOR BACKWARD COMPATIBILITY - Keep existing endpoint
+@router.get("/quiz/{quiz_id}/assessments")
+async def get_quiz_assessments(
+    quiz_id: int,
+    student_name: Optional[str] = Query(
+        None, description="Filter by student name (partial match)"
+    ),
+    min_score: Optional[float] = Query(None, description="Minimum score filter"),
+    max_score: Optional[float] = Query(None, description="Maximum score filter"),
+    offset: int = Query(0, description="Pagination offset"),
+    limit: int = Query(10, description="Number of results per page"),
+) -> Dict[str, Any]:
+    """
+    Get all assessments for a specific quiz with filtering options
+    
+    Ini buat dapetin penilaian 1 kuis yang mencakup pengerjaan seluruh siswa
+
+    Args:
+        quiz_id: Quiz ID to get assessments for
+        student_name: Optional student name filter (case-insensitive partial match)
+        min_score: Optional minimum score filter
+        max_score: Optional maximum score filter
+        offset: Pagination offset
+        limit: Number of results per page
+
+    Returns:
+        Dictionary containing assessments list and metadata
+    """
+    try:
+        assessments = await AssessmentService.get_quiz_assessments_with_filters(
+            quiz_id=quiz_id,
+            student_name=student_name,
+            min_score=min_score,
+            max_score=max_score,
+            offset=offset,
+            limit=limit,
+        )
+
+        return {
+            "quiz_id": quiz_id,
+            "assessments": assessments,
+            "pagination": {
+                "offset": offset,
+                "limit": limit,
+                "total_returned": len(assessments),
+            },
+            "filters_applied": {
+                "student_name": student_name,
+                "min_score": min_score,
+                "max_score": max_score,
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving quiz assessments: {str(e)}"
+        )
+
+
+# FIXED: Add missing route path
+@router.get("/quiz/{quiz_id}/statistics")
+async def get_quiz_statistics(quiz_id: int) -> Dict[str, Any]:
+    """
+    Get comprehensive statistics for a specific quiz
+
+    Args:
+        quiz_id: Quiz ID to get statistics for
+
+    Returns:
+        Dictionary containing various statistics including:
+        - Total assessments
+        - Average scores and percentages
+        - Score distribution by grade
+        - Top and bottom performers
+        - Date range of assessments
+    """
+    try:
+        statistics = await AssessmentService.get_quiz_statistics(quiz_id)
+        if not statistics:
+            raise HTTPException(
+                status_code=404, detail="No assessments found for this quiz"
+            )
+        return statistics
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving quiz statistics: {str(e)}"
+        )
