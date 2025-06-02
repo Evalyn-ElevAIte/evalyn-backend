@@ -115,48 +115,64 @@ class AssessmentService:
 
                 # Create question assessments
                 for question_data in assessment_data.question_assessments:
-                     # == AI ANALYZER CHECK ==
-                    print("==question_data.student_answer_text : ", question_data.student_answer_text)
+                    # == AI ANALYZER CHECK ==
+                    print(
+                        "==question_data.student_answer_text : ",
+                        question_data.student_answer_text,
+                    )
                     print(type(question_data.student_answer_text))
 
                     # Check if it's a string that needs parsing
                     if isinstance(question_data.student_answer_text, str):
                         try:
                             # First try JSON parsing (for properly formatted JSON)
-                            question_data.student_answer_text = json.loads(question_data.student_answer_text)
+                            question_data.student_answer_text = json.loads(
+                                question_data.student_answer_text
+                            )
                             print("Successfully parsed JSON string")
                         except json.JSONDecodeError:
                             try:
                                 # If JSON fails, try using ast.literal_eval for Python dict strings
                                 import ast
-                                question_data.student_answer_text = ast.literal_eval(question_data.student_answer_text)
+
+                                question_data.student_answer_text = ast.literal_eval(
+                                    question_data.student_answer_text
+                                )
                                 print("Successfully parsed Python dict string")
                             except (ValueError, SyntaxError):
-                                print("Not valid JSON or Python dict, treating as plain text")
-                                pass  # fallback to treating it as plain text
-                    
+                                # If both fail, wrap the string in a dict with "text" key
+                                question_data.student_answer_text = {
+                                    "text": question_data.student_answer_text
+                                }
+                                print("Wrapped plain text in JSON dict with 'text' key")
                     # If it's already a dict, no need to parse
                     elif isinstance(question_data.student_answer_text, dict):
                         print("Already a dictionary, no parsing needed")
 
-                    plagiarism_score = None  # Default value if not set by checks
-                    
+                    plagiarism_score_final = None  # Default value if not set by checks
+
                     # Now check if we have a dictionary with text content
                     if isinstance(question_data.student_answer_text, dict):
                         if "text" in question_data.student_answer_text:
                             text = question_data.student_answer_text["text"]
                             plagiarism_score_result = await check_ai_with_sapling(text)
-                            print(f"plagiarism score: {plagiarism_score_result}")
-                            plagiarism_score = plagiarism_score_result["score"]
+                            print(f"AI detector result: {plagiarism_score_result}")
+
+                            # Append the AI detector score to the dictionary (rounded to 2 decimal places)
+                            question_data.student_answer_text["ai_score"] = round(
+                                plagiarism_score_result["score"], 2
+                            )
+
+                            plagiarism_score_final = question_data.student_answer_text["ai_score"]
+                            print(f"AI detection score appended: {plagiarism_score_final}")
                         else:
                             print("No 'text' key found in dictionary")
+                            plagiarism_score_final = None
                     else:
                         print("student_answer_text is not a dictionary")
-                    
-                    print(f"Final plagiarism score: {plagiarism_score}")
+                        plagiarism_score_final = None
 
-                    # logger.debug(f"Final plagiarism score: {plagiarism_score}")
-                    print(f"Final plagiarism score: {plagiarism_score}")
+                    print(f"Final AI detection score: {plagiarism_score_final}")
                     question_assessment = await QuestionAssessment.create(
                         assessment=assessment,
                         question_id=question_data.question_id,
@@ -166,7 +182,7 @@ class AssessmentService:
                         rubric=question_data.rubric,
                         rubric_max_score=question_data.rubric_max_score,
                         score=question_data.score,
-                        rating_plagiarism=plagiarism_score,
+                        rating_plagiarism=plagiarism_score_final,
                         max_score_possible=question_data.max_score_possible,
                         overall_question_feedback=question_data.overall_question_feedback,
                         using_db=conn,
@@ -768,7 +784,6 @@ class AssessmentService:
             logger.error(f"Error getting quiz statistics: {e}")
             return {}
 
-
     @staticmethod
     async def get_all_students_assessments(
         quiz_id: int,
@@ -934,11 +949,12 @@ class AssessmentService:
             logger.error(f"Error getting all students assessments: {e}")
             return {"quiz": None, "assessments": [], "error": str(e)}
 
-
     @staticmethod
     async def update_assessment_grading(
         assessment_id: int,
-        question_scores: List[Dict[str, Any]],  # [{"question_id": int, "new_score": float}]
+        question_scores: List[
+            Dict[str, Any]
+        ],  # [{"question_id": int, "new_score": float}]
     ) -> Optional[Dict[str, Any]]:
         """
         Update assessment grading by teacher
@@ -990,9 +1006,10 @@ class AssessmentService:
                     await participant.save(using_db=conn)
 
                 # Calculate new percentage
-                print(total_score,total_max_score)
+                print(total_score, total_max_score)
                 new_percentage = round(
-                    (total_score / total_max_score * 100) if total_max_score > 0 else 0, 2
+                    (total_score / total_max_score * 100) if total_max_score > 0 else 0,
+                    2,
                 )
 
                 return {
@@ -1004,7 +1021,6 @@ class AssessmentService:
             except Exception as e:
                 logger.error(f"Error updating assessment grading: {e}")
                 raise e
-
 
     @staticmethod
     async def get_student_own_assessments(
