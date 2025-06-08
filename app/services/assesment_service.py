@@ -135,6 +135,7 @@ class AssessmentService:
                     print(type(question_data.student_answer_text))
 
                     temp_student_answer_text = question_data.student_answer_text
+                    string_student_answer_text = question_data.student_answer_text["text"] if isinstance(question_data.student_answer_text, dict) else question_data.student_answer_text
 
                     # Check if it's a string that needs parsing
                     if isinstance(temp_student_answer_text, str):
@@ -190,7 +191,7 @@ class AssessmentService:
                         assessment=assessment,
                         question_id=question_data.question_id,
                         question_text=question_data.question_text,
-                        student_answer_text=question_data.student_answer_text,
+                        student_answer_text=string_student_answer_text,
                         lecturer_answer_text=question_data.lecturer_answer_text,
                         rubric=question_data.rubric,
                         rubric_max_score=question_data.rubric_max_score,
