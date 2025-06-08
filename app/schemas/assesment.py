@@ -44,6 +44,7 @@ class AIConfidenceScores(BaseModel):
 class ProcessingMetadata(BaseModel):
     model_used: Optional[str] = None
     prompt_version: Optional[str] = None
+    input_tokens: Optional[int] = None
 
 
 class AssessmentCreate(BaseModel):
@@ -68,6 +69,7 @@ class RubricComponentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class StudentKeyPointResponse(BaseModel):
     id: int
@@ -98,7 +100,7 @@ class QuestionAssessmentResponse(BaseModel):
     score: int
     max_score_possible: int
     overall_question_feedback: Optional[str]
-    rating_plagiarism:Optional[int]
+    rating_plagiarism: Optional[int]
     created_at: datetime
     rubric_components: List[RubricComponentResponse] = []
     key_points: List[StudentKeyPointResponse] = []
@@ -109,7 +111,7 @@ class QuestionAssessmentResponse(BaseModel):
 
 
 class AssessmentResponse(BaseModel):
-    id: int # The actual primary key from the database
+    id: int  # The actual primary key from the database
     user_id: int
     quiz_id: int
     submission_timestamp_utc: datetime
@@ -123,16 +125,18 @@ class AssessmentResponse(BaseModel):
     feedback_generation_confidence: Optional[Decimal]
     model_used: Optional[str]
     prompt_version: Optional[str]
+    input_tokens: Optional[int] = None # Added input_tokens
     created_at: datetime
     updated_at: datetime
     question_assessments: List[QuestionAssessmentResponse] = []
+
     class Config:
         from_attributes = True
 
 
 # Summary schemas for analytics
 class AssessmentSummary(BaseModel):
-    id: int # The actual primary key from the database
+    id: int  # The actual primary key from the database
     user_id: int
     quiz_id: int
     overall_score: int
