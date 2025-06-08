@@ -151,11 +151,13 @@ class QuestionAssessment(Model):
     class Meta:
         table = "question_assessments"
         indexes = [
-            ["assessment", "question_id"],  # Use the foreign key object directly
+            ["assessment", "question_id"], # Use the foreign key object directly
         ]
 
     def __str__(self):
-        return f"Question {self.question_id} - Assessment {self.assessment.id}"
+        return (
+            f"Question {self.question_id} - Assessment {self.assessment.id}"
+        )
 
 
 class RubricComponentFeedback(Model):

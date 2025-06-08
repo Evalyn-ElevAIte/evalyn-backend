@@ -28,15 +28,14 @@ def call_azure_openai_api(prompt_text):
         prompt_text (str): The user prompt for the assistant.
 
     Returns:
-        tuple: A tuple containing (assistant's response (str), input token count (int)).
-               Returns (error_message (str), 0) in case of an error.
+        str: The assistant's response, or an error message.
     """
     api_key = get_azure_api_key()
     if not api_key:
-        return "Error: API Key not found.", 0
+        return "Error: API Key not found."
 
     if not AZURE_API_BASE_URL or not AZURE_DEPLOYMENT_NAME:
-        return "Error: Missing AZURE_OPENAI_ENDPOINT or AZURE_DEPLOYMENT_NAME.", 0
+        return "Error: Missing AZURE_OPENAI_ENDPOINT or AZURE_DEPLOYMENT_NAME."
 
     url = f"{AZURE_API_BASE_URL}openai/deployments/{AZURE_DEPLOYMENT_NAME}/chat/completions?api-version={AZURE_API_VERSION}"
 
@@ -50,7 +49,7 @@ def call_azure_openai_api(prompt_text):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": prompt_text}
         ],
-        "max_tokens": 8192,
+        "max_tokens": 4096,
         "temperature": 1.0,
         "top_p": 1.0,
         "frequency_penalty": 0.0,
@@ -63,7 +62,6 @@ def call_azure_openai_api(prompt_text):
         response.raise_for_status()
         response_json = response.json()
 
-        assistant_response = ""
         if (
             "choices" in response_json and
             isinstance(response_json["choices"], list) and
@@ -71,31 +69,22 @@ def call_azure_openai_api(prompt_text):
             "message" in response_json["choices"][0] and
             "content" in response_json["choices"][0]["message"]
         ):
-            assistant_response = response_json["choices"][0]["message"]["content"]
-        else:
-            print("Error: Unexpected response format for choices.")
-            assistant_response = json.dumps(response_json, indent=2)
+            return response_json["choices"][0]["message"]["content"]
 
-        input_tokens = 0
-        if "usage" in response_json and "prompt_tokens" in response_json["usage"]:
-            input_tokens = response_json["usage"]["prompt_tokens"]
-        else:
-            print("Warning: 'usage' or 'prompt_tokens' not found in response.")
-
-        return assistant_response, input_tokens
+        print("Error: Unexpected response format.")
+        return json.dumps(response_json, indent=2)
 
     except requests.exceptions.HTTPError as http_err:
         print(f"HTTP Error: {http_err}")
         try:
-            error_detail = json.dumps(http_err.response.json(), indent=2)
+            return json.dumps(http_err.response.json(), indent=2)
         except Exception:
-            error_detail = f"{http_err.response.status_code} - {http_err.response.text}"
-        return f"HTTP Error: {http_err}", 0
+            return f"HTTP Error: {http_err.response.status_code} - {http_err.response.text}"
 
     except requests.exceptions.RequestException as err:
         print(f"Request Exception: {err}")
-        return f"Request Exception: {err}", 0
+        return f"Request Exception: {err}"
     except json.JSONDecodeError as json_err:
-        return f"JSON Decode Error: {json_err}", 0
+        return f"JSON Decode Error: {json_err}"
     except Exception as e:
-        return f"Unexpected Error: {e}", 0
+        return f"Unexpected Error: {e}"

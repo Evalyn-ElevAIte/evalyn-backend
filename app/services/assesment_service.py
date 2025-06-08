@@ -42,29 +42,17 @@ class AssessmentService:
         Create assessment from JSON string
         """
         try:
-            assessment_dict = {}
-            # Attempt to parse as JSON first
-            try:
-                assessment_dict = json.loads(assessment_json)
-            except json.JSONDecodeError as json_error:
-                # If JSON parsing fails, try parsing as a Python literal (dictionary string)
-                try:
-                    import ast
-                    assessment_dict = ast.literal_eval(assessment_json)
-                except (ValueError, SyntaxError) as ast_error:
-                    # If both fail, try to fix common JSON issues (e.g., unescaped backslashes)
-                    # This is a last resort, as it modifies the string for JSON parsing specifically
-                    try:
-                        assessment_dict = json.loads(assessment_json.replace('\\', '\\\\'))
-                    except json.JSONDecodeError as final_json_error:
-                        logger.error(f"Failed to parse assessment_json: Original JSON error: {json_error}, AST error: {ast_error}, Final JSON (escaped) error: {final_json_error}")
-                        return None
-            
+            # Parse JSON to dict first
+            assessment_dict = json.loads(assessment_json)
+
             # Convert to Pydantic model for validation
             assessment_data = AssessmentCreate(**assessment_dict)
 
             return await AssessmentService.create_assessment(assessment_data)
 
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON format: {e}")
+            return None
         except Exception as e:
             logger.error(f"Error creating assessment from JSON: {e}")
             return None
@@ -134,14 +122,12 @@ class AssessmentService:
                     )
                     print(type(question_data.student_answer_text))
 
-                    temp_student_answer_text = question_data.student_answer_text
-
                     # Check if it's a string that needs parsing
-                    if isinstance(temp_student_answer_text, str):
+                    if isinstance(question_data.student_answer_text, str):
                         try:
                             # First try JSON parsing (for properly formatted JSON)
-                            temp_student_answer_text = json.loads(
-                                temp_student_answer_text
+                            question_data.student_answer_text = json.loads(
+                                question_data.student_answer_text
                             )
                             print("Successfully parsed JSON string")
                         except json.JSONDecodeError:
@@ -149,34 +135,35 @@ class AssessmentService:
                                 # If JSON fails, try using ast.literal_eval for Python dict strings
                                 import ast
 
-                                temp_student_answer_text = ast.literal_eval(
-                                    temp_student_answer_text
+                                question_data.student_answer_text = ast.literal_eval(
+                                    question_data.student_answer_text
                                 )
                                 print("Successfully parsed Python dict string")
                             except (ValueError, SyntaxError):
                                 # If both fail, wrap the string in a dict with "text" key
-                                temp_student_answer_text = {
-                                    "text": temp_student_answer_text
+                                question_data.student_answer_text = {
+                                    "text": question_data.student_answer_text
                                 }
                                 print("Wrapped plain text in JSON dict with 'text' key")
                     # If it's already a dict, no need to parse
-                    elif isinstance(temp_student_answer_text, dict):
+                    elif isinstance(question_data.student_answer_text, dict):
                         print("Already a dictionary, no parsing needed")
 
                     plagiarism_score_final = None  # Default value if not set by checks
 
                     # Now check if we have a dictionary with text content
-                    if isinstance(temp_student_answer_text, dict):
-                        if "text" in temp_student_answer_text:
-                            text = temp_student_answer_text["text"]
+                    if isinstance(question_data.student_answer_text, dict):
+                        if "text" in question_data.student_answer_text:
+                            text = question_data.student_answer_text["text"]
                             plagiarism_score_result = await check_ai_with_sapling(text)
                             print(f"AI detector result: {plagiarism_score_result}")
 
                             # Append the AI detector score to the dictionary (rounded to 2 decimal places)
-                            plagiarism_score_final = round(
+                            question_data.student_answer_text["ai_score"] = round(
                                 plagiarism_score_result["score"], 2
                             )
 
+                            plagiarism_score_final = question_data.student_answer_text["ai_score"]
                             print(f"AI detection score appended: {plagiarism_score_final}")
                         else:
                             print("No 'text' key found in dictionary")
